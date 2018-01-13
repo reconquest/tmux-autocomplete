@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mgutz/ansi"
 	"github.com/nsf/termbox-go"
+	"github.com/reconquest/executil-go"
 )
 
-var version = "1.0"
+var version = "2.0"
 
 var usage = `tmux-autocomplete - provides autocomplete interface for pane contents.
 
@@ -21,10 +23,12 @@ Usage:
 
 
 Options:
-  -h --help    Show this help.
-  -r <regexp>  Identifier regexp to match.
-                [default: [!-~]+]
-  -l <log>     Specify log file [default: /dev/stderr]
+  -r --regexp <regexp>  Identifier regexp to match.
+                         [default: [!-~]+]
+  -n --no-prefix        Don't use identifier under cursor as prefix.
+  -l --log <log>        Specify log file [default: /dev/stderr]
+  -e --exec <program>   Exec specified program and pass specified candidate as argument.
+  -h --help             Show this help.
 `
 
 func main() {
@@ -40,7 +44,7 @@ func main() {
 	}
 
 	logfile, err := os.OpenFile(
-		args["-l"].(string),
+		args["--log"].(string),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		0600,
 	)
@@ -49,6 +53,13 @@ func main() {
 	}
 
 	log.SetOutput(logfile)
+
+	defer func() {
+		tears := recover()
+		if tears != nil {
+			log.Println(tears)
+		}
+	}()
 
 	tmux := &Tmux{}
 
@@ -64,6 +75,9 @@ func main() {
 	var (
 		cursorX int
 		cursorY int
+
+		program, _ = args["--exec"].(string)
+		withPrefix = !args["--no-prefix"].(bool)
 	)
 
 	_, err = fmt.Sscan(args["<cursor-x>"].(string), &cursorX)
@@ -82,13 +96,17 @@ func main() {
 	}
 
 	x, y := pane.GetBufferXY(cursorX, cursorY)
-	identifier, err := getIdentifierToComplete(args, pane, x, y)
-	if err != nil {
-		log.Fatalln(err)
-	}
 
-	if identifier == nil {
-		return
+	var identifier *Identifier
+	if withPrefix {
+		identifier, err = getIdentifierToComplete(args, pane, x, y)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if identifier == nil {
+			return
+		}
 	}
 
 	moveCursor(cursorX, cursorY)
@@ -98,10 +116,14 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	if identifier == nil {
+		identifier = candidates[len(candidates)-1].Identifier
+	}
+
 	selectDefaultCandidate(candidates, identifier.X, identifier.Y)
 
 	if len(getUniqueCandidates(candidates)) == 1 {
-		useCurrentCandidate(tmux, pane, identifier, candidates)
+		useCurrentCandidate(tmux, pane, identifier, candidates, program)
 
 		return
 	}
@@ -140,7 +162,7 @@ func main() {
 				selectNextCandidate(candidates, 1, 0)
 
 			case termbox.KeyEnter:
-				useCurrentCandidate(tmux, pane, identifier, candidates)
+				useCurrentCandidate(tmux, pane, identifier, candidates, program)
 
 				return
 
@@ -172,15 +194,25 @@ func start(args map[string]interface{}, tmux *Tmux) error {
 		return err
 	}
 
-	return tmux.NewWindow(
+	cmd := []string{
 		os.Args[0],
-		"-l",
-		args["-l"].(string),
+		"--log", args["--log"].(string),
+		"--regexp", fmt.Sprintf("%q", args["--regexp"].(string)),
 		pane,
 		cursorX,
 		cursorY,
 		"-W",
-	)
+	}
+
+	if program, ok := args["--exec"].(string); ok {
+		cmd = append(cmd, "--exec", program)
+	}
+
+	if args["--no-prefix"].(bool) {
+		cmd = append(cmd, "--no-prefix")
+	}
+
+	return tmux.NewWindow(cmd...)
 }
 
 func renderPane(pane *Pane, colors Colorscheme) {
@@ -287,16 +319,31 @@ func useCurrentCandidate(
 	pane *Pane,
 	identifier *Identifier,
 	candidates []*Candidate,
+	program string,
 ) {
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
 		return
 	}
 
-	text := string([]rune(selected.Value)[identifier.Length():])
+	var text string
+	if program != "" {
+		// if we want to run program then we don't need to remove existing
+		// identifier prefix
+		text = selected.Value
+	} else {
+		text = string([]rune(selected.Value)[identifier.Length():])
+	}
 
-	err := tmux.Paste(text, "-t", pane.ID)
-	if err != nil {
-		panic(err)
+	if program != "" {
+		_, _, err := executil.Run(exec.Command(program, text))
+		if err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		err := tmux.Paste(text, "-t", pane.ID)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
