@@ -6,7 +6,7 @@ import (
 )
 
 type Candidate struct {
-	Identifier
+	*Identifier
 
 	Selected bool
 }
@@ -33,7 +33,7 @@ func getIdentifierToComplete(
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
-		`^.*?(` + args["-r"].(string) + `)$`,
+		`^.*?(` + args["--regexp"].(string) + `)$`,
 	)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func getCompletionCandidates(
 ) ([]*Candidate, error) {
 	lines := pane.Printable()
 
-	matcher, err := regexp.Compile(args["-r"].(string))
+	matcher, err := regexp.Compile(args["--regexp"].(string))
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +73,11 @@ func getCompletionCandidates(
 		for _, match := range matches {
 			value := line[match[0]:match[1]]
 
-			if !strings.HasPrefix(value, identifier.Value) {
+			if identifier != nil && !strings.HasPrefix(value, identifier.Value) {
 				continue
 			}
 
-			if value == identifier.Value {
+			if identifier != nil && value == identifier.Value {
 				continue
 			}
 
@@ -86,12 +86,12 @@ func getCompletionCandidates(
 				y = lineNumber
 			)
 
-			if x == identifier.X && y == identifier.Y {
+			if identifier != nil && x == identifier.X && y == identifier.Y {
 				continue
 			}
 
 			candidates = append(candidates, &Candidate{
-				Identifier: Identifier{
+				Identifier: &Identifier{
 					X: x,
 					Y: y,
 
