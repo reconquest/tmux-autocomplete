@@ -118,11 +118,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	x, y := pane.GetBufferXY(cursorX, cursorY)
+	lines := pane.GetPrintable()
+
+	x, y := pane.GetBufferXY(lines, cursorX, cursorY)
 
 	var identifier *Identifier
 	if withPrefix {
-		identifier, err = getIdentifierToComplete(args, pane, x, y)
+		identifier, err = getIdentifierToComplete(args, lines, x, y)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -134,7 +136,7 @@ func main() {
 
 	moveCursor(cursorX, cursorY)
 
-	candidates, err := getCompletionCandidates(args, pane, identifier)
+	candidates, err := getCompletionCandidates(args, lines, pane, identifier)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -158,8 +160,8 @@ func main() {
 
 	for {
 		renderPane(pane, theme)
-		renderIdentifier(tmux, pane, theme, identifier)
-		renderCandidates(tmux, pane, theme, candidates)
+		renderIdentifier(tmux, lines, pane, theme, identifier)
+		renderCandidates(tmux, lines, pane, theme, candidates)
 
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
@@ -298,17 +300,19 @@ func decolorize(sequence string, theme *Theme) string {
 
 func renderIdentifier(
 	tmux *Tmux,
+	lines []string,
 	pane *Pane,
 	theme *Theme,
 	identifier *Identifier,
 ) {
-	moveCursor(pane.GetScreenXY(identifier.X, identifier.Y))
+	moveCursor(pane.GetScreenXY(lines, identifier.X, identifier.Y))
 
 	fmt.Print(ansi.ColorFunc(theme.Identifier)(identifier.Value))
 }
 
 func renderCandidates(
 	tmux *Tmux,
+	lines []string,
 	pane *Pane,
 	theme *Theme,
 	candidates []*Candidate,
@@ -317,7 +321,7 @@ func renderCandidates(
 		x := candidate.X
 		y := candidate.Y
 
-		moveCursor(pane.GetScreenXY(x, y))
+		moveCursor(pane.GetScreenXY(lines, x, y))
 
 		color := theme.Candidate.Normal
 

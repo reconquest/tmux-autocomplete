@@ -34,8 +34,8 @@ func CapturePane(tmux *Tmux, id string, args ...string) (*Pane, error) {
 	}, nil
 }
 
-func (pane *Pane) GetBufferXY(x, y int) (int, int) {
-	for row, line := range pane.Printable() {
+func (pane *Pane) GetBufferXY(lines []string, x, y int) (int, int) {
+	for row, line := range lines {
 		offset := (len([]rune(line)) - 1) / pane.Width
 
 		if row+offset >= y {
@@ -50,10 +50,10 @@ func (pane *Pane) GetBufferXY(x, y int) (int, int) {
 	return x, y
 }
 
-func (pane *Pane) GetScreenXY(x, y int) (int, int) {
+func (pane *Pane) GetScreenXY(lines []string, x, y int) (int, int) {
 	offset := 0
 
-	for row, line := range pane.Printable() {
+	for row, line := range lines {
 		if row == y {
 			return x % pane.Width, y + x/pane.Width + offset
 		} else {
@@ -64,7 +64,7 @@ func (pane *Pane) GetScreenXY(x, y int) (int, int) {
 	return x, y
 }
 
-func (pane *Pane) Printable() []string {
+func (pane *Pane) GetPrintable() []string {
 	printable := []string{}
 
 	for _, line := range pane.Lines {

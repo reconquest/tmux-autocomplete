@@ -24,12 +24,10 @@ func (identifier *Identifier) Length() int {
 
 func getIdentifierToComplete(
 	args map[string]interface{},
-	pane *Pane,
+	lines []string,
 	x int,
 	y int,
 ) (*Identifier, error) {
-	lines := pane.Printable()
-
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
@@ -55,11 +53,10 @@ func getIdentifierToComplete(
 
 func getCompletionCandidates(
 	args map[string]interface{},
+	lines []string,
 	pane *Pane,
 	identifier *Identifier,
 ) ([]*Candidate, error) {
-	lines := pane.Printable()
-
 	matcher, err := regexp.Compile(args["--regexp"].(string))
 	if err != nil {
 		return nil, err
