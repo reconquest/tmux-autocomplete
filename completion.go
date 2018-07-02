@@ -174,47 +174,12 @@ func selectNextCandidate(
 		}
 	}
 
-	distance := func(a, b *Candidate) int {
-		metric := func(x1, y1, x2, y2 int) int {
-			// we multiply y distance by 1.5 due font proportions
-			return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)*3/2
-		}
-
-		min := func(values ...int) int {
-			min := values[0]
-			for _, value := range values {
-				if value < min {
-					min = value
-				}
-			}
-
-			return min
-		}
-
-		var (
-			ax = a.X
-			ay = a.Y
-			bx = b.X
-			by = b.Y
-
-			al = a.Length()
-			bl = b.Length()
-		)
-
-		return min(
-			metric(ax, ay, bx, by),
-			metric(ax+al, ay, bx+bl, by),
-			metric(ax+al, ay, bx, by),
-			metric(ax, ay, bx+al, by),
-		)
-	}
-
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
 		return
 	}
 
-	cone := []*Candidate{}
+	space := []*Candidate{}
 
 	for _, candidate := range candidates {
 		signX := sign(dirX)
@@ -223,26 +188,44 @@ func selectNextCandidate(
 		offsetX := sign(candidate.X - selected.X)
 		offsetY := sign(candidate.Y - selected.Y)
 
-		if dirX != 0 && signX != offsetX {
-			continue
+		if dirY == 0 {
+			if offsetY != 0 {
+				continue
+			}
+
+			if signX != offsetX {
+				continue
+			}
+		} else {
+			if signY != offsetY {
+				continue
+			}
 		}
 
-		if dirY != 0 && signY != offsetY {
-			continue
-		}
-
-		cone = append(cone, candidate)
+		space = append(space, candidate)
 	}
 
-	if len(cone) == 0 {
+	if len(space) == 0 {
 		return
 	}
 
-	closest := cone[0]
+	closest := space[0]
 
-	for _, candidate := range cone {
-		if distance(selected, candidate) < distance(selected, closest) {
+	abs := func(x int) int {
+		if x < 0 {
+			x = -x
+		}
+
+		return x
+	}
+
+	for _, candidate := range space {
+		distanceY := abs(selected.Y-candidate.Y) - abs(selected.Y-closest.Y)
+		distanceX := abs(selected.X-candidate.X) - abs(selected.X-closest.X)
+
+		if distanceY < 0 || distanceY == 0 && distanceX < 0 {
 			closest = candidate
+			continue
 		}
 	}
 
