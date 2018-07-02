@@ -5,11 +5,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mgutz/ansi"
 	"github.com/nsf/termbox-go"
 	"github.com/reconquest/executil-go"
+	"github.com/reconquest/karma-go"
 )
 
 var version = "2.0"
@@ -21,13 +24,18 @@ Usage:
   tmux-autocomplete [options]
   tmux-autocomplete [options] -W <pane> <cursor-x> <cursor-y>
 
-
 Options:
   -r --regexp <regexp>  Identifier regexp to match.
                          [default: [!-~]+]
   -n --no-prefix        Don't use identifier under cursor as prefix.
   -l --log <log>        Specify log file [default: /dev/stderr]
   -e --exec <program>   Exec specified program and pass specified candidate as argument.
+  --theme <name>        Name of theme to use. [default: light]
+  --theme-path <dir>    Path to directories with themes. Default:
+                         * ` + defaultSystemThemePath + `
+                         * ` + defaultUserThemePath + `
+                         You can specify multiple directories using : separator.
+  -v --version          Print version.
   -h --help             Show this help.
 `
 
@@ -54,10 +62,25 @@ func main() {
 
 	log.SetOutput(logfile)
 
+	themePath, ok := args["--theme-path"].(string)
+	if !ok {
+		themePath = defaultThemePath
+	}
+
+	theme, err := LoadTheme(themePath, args["--theme"].(string))
+	if err != nil {
+		log.Fatalln(
+			karma.
+				Describe("path", themePath).
+				Describe("theme", args["--theme"].(string)).
+				Format(err, "unable to load theme"),
+		)
+	}
+
 	defer func() {
 		tears := recover()
 		if tears != nil {
-			log.Println(tears)
+			log.Printf("%s\n%s", tears, getStack(3))
 		}
 	}()
 
@@ -133,18 +156,10 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// TODO: make customizable by CLI
-	colorscheme := Colorscheme{}
-	colorscheme.Identifier = `default+ub:default`
-	colorscheme.Candidate.Normal = `green:default`
-	colorscheme.Candidate.Selected = `16+b:green`
-	colorscheme.Fog.Text = `236:default`
-	colorscheme.Fog.Background = `238:236`
-
 	for {
-		renderPane(pane, colorscheme)
-		renderIdentifier(tmux, pane, colorscheme, identifier)
-		renderCandidates(tmux, pane, colorscheme, candidates)
+		renderPane(pane, theme)
+		renderIdentifier(tmux, pane, theme, identifier)
+		renderCandidates(tmux, pane, theme, candidates)
 
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
@@ -215,22 +230,22 @@ func start(args map[string]interface{}, tmux *Tmux) error {
 	return tmux.NewWindow(cmd...)
 }
 
-func renderPane(pane *Pane, colors Colorscheme) {
+func renderPane(pane *Pane, theme *Theme) {
 	moveCursor(0, 0)
 
-	fmt.Print(ansi.ColorCode(colors.Fog.Text))
+	fmt.Print(ansi.ColorCode(theme.Fog.Text))
 
 	text := reEscapeSequence.ReplaceAllStringFunc(
 		pane.String(),
 		func(sequence string) string {
-			return decolorize(sequence, colors)
+			return decolorize(sequence, theme)
 		},
 	)
 
 	fmt.Print(text)
 }
 
-func decolorize(sequence string, colors Colorscheme) string {
+func decolorize(sequence string, theme *Theme) string {
 	var (
 		matches = reEscapeSequence.FindStringSubmatch(sequence)
 		code    = matches[1]
@@ -240,13 +255,13 @@ func decolorize(sequence string, colors Colorscheme) string {
 	// 49 means reset background color to default,
 	// we remove background color and set dim color for foreground
 	case "49":
-		return ansi.DefaultBG + ansi.ColorCode(colors.Fog.Text)
+		return ansi.DefaultBG + ansi.ColorCode(theme.Fog.Text)
 
 	// 39 means reset foreground color to default,
 	// 0 means reset all style to default,
 	// we reset style and set dim color for foreground
 	case "0", "39":
-		return ansi.Reset + ansi.ColorCode(colors.Fog.Text)
+		return ansi.Reset + ansi.ColorCode(theme.Fog.Text)
 
 	// 1 means bold,
 	// we remove bold
@@ -256,7 +271,7 @@ func decolorize(sequence string, colors Colorscheme) string {
 	// 7 means reverse,
 	// we set dim background color
 	case "7":
-		return ansi.ColorCode(colors.Fog.Background)
+		return ansi.ColorCode(theme.Fog.Background)
 
 	default:
 		// all single-number codes,
@@ -265,16 +280,16 @@ func decolorize(sequence string, colors Colorscheme) string {
 			return ""
 		}
 
-		// all foreground colors,
+		// all foreground theme,
 		// we replace with dim foreground color
 		if code[0] == '3' || code[0] == '9' {
-			return ansi.ColorCode(colors.Fog.Text)
+			return ansi.ColorCode(theme.Fog.Text)
 		}
 
-		// all background colors,
+		// all background theme,
 		// we replace with dim background color
 		if code[0] == '4' || code[0] == '1' {
-			return ansi.ColorCode(colors.Fog.Background)
+			return ansi.ColorCode(theme.Fog.Background)
 		}
 	}
 
@@ -284,18 +299,18 @@ func decolorize(sequence string, colors Colorscheme) string {
 func renderIdentifier(
 	tmux *Tmux,
 	pane *Pane,
-	colors Colorscheme,
+	theme *Theme,
 	identifier *Identifier,
 ) {
 	moveCursor(pane.GetScreenXY(identifier.X, identifier.Y))
 
-	fmt.Print(ansi.ColorFunc(colors.Identifier)(identifier.Value))
+	fmt.Print(ansi.ColorFunc(theme.Identifier)(identifier.Value))
 }
 
 func renderCandidates(
 	tmux *Tmux,
 	pane *Pane,
-	colors Colorscheme,
+	theme *Theme,
 	candidates []*Candidate,
 ) {
 	for _, candidate := range candidates {
@@ -304,10 +319,10 @@ func renderCandidates(
 
 		moveCursor(pane.GetScreenXY(x, y))
 
-		color := colors.Candidate.Normal
+		color := theme.Candidate.Normal
 
 		if candidate.Selected {
-			color = colors.Candidate.Selected
+			color = theme.Candidate.Selected
 		}
 
 		fmt.Print(ansi.ColorFunc(color)(candidate.Value))
@@ -345,5 +360,28 @@ func useCurrentCandidate(
 		if err != nil {
 			log.Fatalln(err)
 		}
+	}
+}
+
+func getStack(skip int) string {
+	buffer := make([]byte, 1024)
+	for {
+		written := runtime.Stack(buffer, true)
+		if written < len(buffer) {
+			// call stack contains of goroutine number and set of calls
+			//   goroutine NN [running]:
+			//   github.com/user/project.(*Type).MethodFoo()
+			//        path/to/src.go:line
+			//   github.com/user/project.MethodBar()
+			//        path/to/src.go:line
+			// so if we need to skip 2 calls than we must split stack on
+			// following parts:
+			//   2(call)+2(call path)+1(goroutine header) + 1(callstack)
+			// and extract first and last parts of resulting slice
+			stack := strings.SplitN(string(buffer[:written]), "\n", skip*2+2)
+			return stack[0] + "\n" + stack[skip*2+1]
+		}
+
+		buffer = make([]byte, 2*len(buffer))
 	}
 }
