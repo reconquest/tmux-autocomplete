@@ -29,7 +29,7 @@ pkg/tree: build
 
 pkg/tree_osx: build
 	@rm -rf pkg/tree_osx
-	@mkdir -p pkg/tree_osx/usr/bin/ pkg/tree_osx/usr/local/share/tmux-autocomplete/themes/
+	@mkdir -p pkg/tree_osx/usr/local/bin/ pkg/tree_osx/usr/local/share/tmux-autocomplete/themes/
 	@cp -r themes pkg/tree_osx/usr/local/share/tmux-autocomplete/
 	@cp $(NAME) pkg/tree_osx/usr/local/bin/
 
