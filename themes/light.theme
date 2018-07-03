@@ -4,4 +4,4 @@ candidate:
     selected: 230+b:232
 fog:
     text: 250:default
-    background: default:default
+    background: 250:default
