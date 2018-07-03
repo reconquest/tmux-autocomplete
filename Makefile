@@ -13,7 +13,7 @@ FPM := --force \
 	--name $(NAME) \
 	--version $(VERSION) \
 	--description "$(DESCRIPTION)" \
-	--chdir pkg/ \
+	--chdir pkg/tree/ \
 	--log error \
 	usr/
 
