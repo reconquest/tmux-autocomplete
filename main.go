@@ -215,6 +215,7 @@ func start(args map[string]interface{}, tmux *Tmux) error {
 		os.Args[0],
 		"--log", args["--log"].(string),
 		"--regexp", fmt.Sprintf("%q", args["--regexp"].(string)),
+		"--theme", args["--theme"].(string),
 		pane,
 		cursorX,
 		cursorY,
