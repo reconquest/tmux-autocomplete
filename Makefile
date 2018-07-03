@@ -27,6 +27,12 @@ pkg/tree: build
 	@cp -r themes pkg/tree/usr/share/tmux-autocomplete/
 	@cp $(NAME) pkg/tree/usr/bin/
 
+pkg/tree_osx: build
+	@rm -rf pkg/tree_osx
+	@mkdir -p pkg/tree_osx/usr/bin/ pkg/tree_osx/usr/local/share/tmux-autocomplete/themes/
+	@cp -r themes pkg/tree_osx/usr/local/share/tmux-autocomplete/
+	@cp $(NAME) pkg/tree_osx/usr/local/bin/
+
 pkg_arch: pkg/tree
 	@echo '> Building Arch Linux package'
 	@fpm -t pacman -p pkg/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz $(FPM)
@@ -43,7 +49,7 @@ pkg_tar: pkg/tree
 	@echo '> Building TAR package'
 	@fpm -t tar -p pkg/tmux-autocomplete_VERSION_ARCH.tar $(FPM)
 
-pkg_osx: pkg/tree
+pkg_osx: pkg/tree_osx
 	@echo '> Building OSX package'
 	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
