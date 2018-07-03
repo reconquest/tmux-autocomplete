@@ -28,9 +28,8 @@ type Theme struct {
 }
 
 var (
-	defaultSystemThemePath = `/usr/share/tmux-autocomplete/themes/`
-	defaultUserThemePath   = `~/.config/tmux-autocomplete/themes/`
-	defaultThemePath       = defaultSystemThemePath + `:` + defaultUserThemePath
+	defaultUserThemePath = `~/.config/tmux-autocomplete/themes/`
+	defaultThemePath     = defaultSystemThemePath + `:` + defaultUserThemePath
 )
 
 func LoadTheme(dirs string, name string) (*Theme, error) {
