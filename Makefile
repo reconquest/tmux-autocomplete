@@ -13,7 +13,6 @@ FPM := --force \
 	--name $(NAME) \
 	--version $(VERSION) \
 	--description "$(DESCRIPTION)" \
-	--chdir pkg/tree/ \
 	--log error \
 	usr/
 
@@ -35,24 +34,25 @@ pkg/tree_osx: build
 
 pkg_arch: pkg/tree
 	@echo '> Building Arch Linux package'
-	@fpm -t pacman -p pkg/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz $(FPM)
+	@fpm -t pacman -p pkg/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz -C pkg/tree $(FPM)
 
 pkg_deb: pkg/tree
 	@echo '> Building Debian package'
-	@fpm -t deb -p pkg/tmux-autocomplete_VERSION_ARCH.deb $(FPM)
+	@fpm -t deb -p pkg/tmux-autocomplete_VERSION_ARCH.deb -C pkg/tree $(FPM)
 
 pkg_rpm: pkg/tree
 	@echo '> Building RPM package'
-	@fpm -t rpm -p pkg/tmux-autocomplete_VERSION_ARCH.rpm $(FPM)
+	@fpm -t rpm -p pkg/tmux-autocomplete_VERSION_ARCH.rpm -C pkg/tree $(FPM)
 
 pkg_tar: pkg/tree
 	@echo '> Building TAR package'
-	@fpm -t tar -p pkg/tmux-autocomplete_VERSION_ARCH.tar $(FPM)
+	@fpm -t tar -p pkg/tmux-autocomplete_VERSION_ARCH.tar -C pkg/tree $(FPM)
 
 pkg_osx: pkg/tree_osx
 	@echo '> Building OSX package'
 	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
+		-C pkg/tree_osx \
 		$(FPM)
 
 .PHONY: pkg
