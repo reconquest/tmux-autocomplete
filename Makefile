@@ -8,7 +8,7 @@ NAME = $(notdir $(PWD))
 DESCRIPTION = Autocompletion system for tmux multiplexer
 
 FPM := --force \
-	--maintainer "reconquest@github" \
+	--maintainer "reconquest@gitlab" \
 	--input-type dir \
 	--name $(NAME) \
 	--version $(VERSION) \
@@ -45,7 +45,9 @@ pkg_tar: pkg/tree
 
 pkg_osx: pkg/tree
 	@echo '> Building OSX package'
-	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg $(FPM)
+	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg \
+		--osxpkg-identifier-prefix com.gitlab.reconquest \
+		$(FPM)
 
 .PHONY: pkg
 pkg: pkg_arch pkg_deb pkg_rpm pkg_tar
