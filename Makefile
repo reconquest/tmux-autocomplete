@@ -43,9 +43,9 @@ pkg_tar: pkg/tree
 	@echo '> Building TAR package'
 	@fpm -t tar -p pkg/tmux-autocomplete_VERSION_ARCH.tar $(FPM)
 
-pkg_osx:
+pkg_osx: pkg/tree
 	@echo '> Building OSX package'
 	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg $(FPM)
 
 .PHONY: pkg
-pkg: pkg/tree pkg_arch pkg_deb pkg_rpm pkg_tar
+pkg: pkg_arch pkg_deb pkg_rpm pkg_tar
