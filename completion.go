@@ -123,6 +123,11 @@ func selectDefaultCandidate(
 	var closest *Candidate
 
 	for _, candidate := range candidates {
+		if closest == nil {
+			closest = candidate
+			continue
+		}
+
 		if candidate.Y > y {
 			continue
 		}
@@ -131,11 +136,6 @@ func selectDefaultCandidate(
 			if candidate.X > x {
 				continue
 			}
-		}
-
-		if closest == nil {
-			closest = candidate
-			continue
 		}
 
 		if y-candidate.Y > y-closest.Y {
