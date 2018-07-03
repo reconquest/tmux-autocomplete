@@ -87,7 +87,7 @@ func main() {
 	tmux := &Tmux{}
 
 	if !args["-W"].(bool) {
-		err := start(args, tmux)
+		err := start(args, themePath, tmux)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -193,7 +193,7 @@ func main() {
 	}
 }
 
-func start(args map[string]interface{}, tmux *Tmux) error {
+func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 	var (
 		pane    string
 		cursorX string
@@ -215,6 +215,7 @@ func start(args map[string]interface{}, tmux *Tmux) error {
 		os.Args[0],
 		"--log", args["--log"].(string),
 		"--regexp", fmt.Sprintf("%q", args["--regexp"].(string)),
+		"--theme-path", themePath,
 		"--theme", args["--theme"].(string),
 		pane,
 		cursorX,
