@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -25,18 +27,19 @@ Usage:
   tmux-autocomplete [options] -W <pane> <cursor-x> <cursor-y>
 
 Options:
-  -r --regexp <regexp>  Identifier regexp to match.
-                         [default: [!-~]+]
-  -n --no-prefix        Don't use identifier under cursor as prefix.
-  -l --log <log>        Specify log file [default: /dev/stderr]
-  -e --exec <program>   Exec specified program and pass specified candidate as argument.
-  --theme <name>        Name of theme to use. [default: light]
-  --theme-path <dir>    Path to directories with themes. Default:
-                         * ` + defaultSystemThemePath + `
-                         * ` + defaultUserThemePath + `
-                         You can specify multiple directories using : separator.
-  -v --version          Print version.
-  -h --help             Show this help.
+  -c --regexp-cursor <regexp>     Identifier regexp to match.
+                                   [default: [!-~]+]
+  -r --regexp-candidate <regexp>  Candidate regexp to match.
+                                   [default: [!-~]+]
+  -n --no-prefix                  Don't use identifier under cursor as prefix.
+  -e --exec <program>             Exec specified program and pass specified candidate as argument.
+  --theme <name>                  Name of theme to use. [default: light]
+  --theme-path <dir>              Path to directories with themes. Default:
+                                   * ` + defaultSystemThemePath + `
+                                   * ` + defaultUserThemePath + `
+                                   You can specify multiple directories using : separator.
+  -v --version                    Print version.
+  -h --help                       Show this help.
 `
 
 func main() {
@@ -51,17 +54,6 @@ func main() {
 		panic(err)
 	}
 
-	logfile, err := os.OpenFile(
-		args["--log"].(string),
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		0600,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	log.SetOutput(logfile)
-
 	themePath, ok := args["--theme-path"].(string)
 	if !ok {
 		themePath = defaultThemePath
@@ -69,27 +61,27 @@ func main() {
 
 	theme, err := LoadTheme(themePath, args["--theme"].(string))
 	if err != nil {
-		log.Fatalln(
+		fatalln(
 			karma.
 				Describe("path", themePath).
 				Describe("theme", args["--theme"].(string)).
 				Format(err, "unable to load theme"),
+			2,
 		)
 	}
-
-	defer func() {
-		tears := recover()
-		if tears != nil {
-			log.Printf("%s\n%s", tears, getStack(3))
-		}
-	}()
 
 	tmux := &Tmux{}
 
 	if !args["-W"].(bool) {
 		err := start(args, themePath, tmux)
 		if err != nil {
-			log.Fatalln(err)
+			fatalln(
+				karma.Format(
+					err,
+					"unable to start tmux-autocomplete",
+				),
+				3,
+			)
 		}
 
 		return
@@ -193,6 +185,12 @@ func main() {
 	}
 }
 
+func fatalln(err interface{}, exitcode int) {
+	fmt.Println(err)
+	log.Println(err)
+	os.Exit(exitcode)
+}
+
 func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 	var (
 		pane    string
@@ -208,30 +206,73 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		},
 	)
 	if err != nil {
-		return err
+		return karma.Format(
+			err,
+			"unable to get current pane/cursor",
+		)
 	}
 
-	cmd := []string{
-		os.Args[0],
-		"--log", args["--log"].(string),
-		"--regexp", fmt.Sprintf("%q", args["--regexp"].(string)),
-		"--theme-path", themePath,
-		"--theme", args["--theme"].(string),
-		pane,
-		cursorX,
-		cursorY,
-		"-W",
+	logsPipe, err := mkfifo()
+	if err != nil {
+		return karma.Format(
+			err,
+			"unable to make fifo",
+		)
 	}
 
-	if program, ok := args["--exec"].(string); ok {
-		cmd = append(cmd, "--exec", program)
+	cmd := []string{os.Args[0]}
+
+	for flag, value := range args {
+		switch flag {
+		case "--theme-path":
+			cmd = append(cmd, flag, fmt.Sprintf("%q", themePath))
+		case "--regexp":
+			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+		default:
+			switch typed := value.(type) {
+			case string:
+				cmd = append(cmd, flag, fmt.Sprintf("%q", typed))
+			case bool:
+				if typed {
+					cmd = append(cmd, flag)
+				}
+			case nil:
+				//
+			default:
+				panic(
+					fmt.Sprintf(
+						"unexpected type of flag %s: %#v (%T)",
+						flag, value, value,
+					),
+				)
+			}
+		}
 	}
 
-	if args["--no-prefix"].(bool) {
-		cmd = append(cmd, "--no-prefix")
+	cmd = append(cmd, pane, cursorX, cursorY, "-W", "2>"+logsPipe)
+
+	err = tmux.NewWindow(cmd...)
+	if err != nil {
+		return karma.
+			Format(
+				err,
+				"unable to create new tmux window",
+			)
 	}
 
-	return tmux.NewWindow(cmd...)
+	logs, err := ioutil.ReadFile(logsPipe)
+	if err != nil {
+		return karma.Format(
+			err,
+			"unable to read logs fifo",
+		)
+	}
+
+	if len(logs) > 0 {
+		return errors.New(string(logs))
+	}
+
+	return nil
 }
 
 func renderPane(pane *Pane, theme *Theme) {

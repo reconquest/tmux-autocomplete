@@ -6,6 +6,8 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+
+	"github.com/reconquest/karma-go"
 )
 
 type Tmux struct {
@@ -30,11 +32,6 @@ func (tmux *Tmux) CapturePane(args ...string) (string, error) {
 	}
 
 	return pane, nil
-
-	//return &Pane{
-	//    ID:    pane,
-	//    Lines: strings.Split(pane, "\n"),
-	//}, nil
 }
 
 func (tmux *Tmux) GetPaneSize(args ...string) (int, int, error) {
@@ -69,7 +66,6 @@ func (tmux *Tmux) Eval(values map[string]interface{}, args ...string) error {
 		"-p",
 		strings.Join(format, "\t"),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -109,7 +105,12 @@ func (tmux *Tmux) exec(command string, args ...string) (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return string(output), err
+		return string(output), karma.
+			Describe("args", fmt.Sprintf("%q", args)).
+			Format(
+				err,
+				"unable to exec tmux command",
+			)
 	}
 
 	return string(output), nil
