@@ -1,5 +1,8 @@
-VERSION = $(shell printf "%s.%s" \
+RELEASE = alpha
+
+VERSION = $(shell printf "%s.%s.%s" \
 	$$(git rev-list --count HEAD) \
+	$(RELEASE) \
 	$$(git rev-parse --short HEAD) \
 )
 
@@ -60,3 +63,9 @@ pkg_osx: pkg/tree_osx
 
 .PHONY: pkg
 pkg: pkg_arch pkg_deb pkg_rpm pkg_tar
+
+license/$(RELEASE).private:
+	lkgen gen -o license/$(RELEASE).private
+
+lkpub: license/$(RELEASE).private
+	lkgen pub -o license/$(RELEASE).public license/$(RELEASE).private
