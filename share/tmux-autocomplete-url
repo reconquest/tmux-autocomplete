@@ -1,0 +1,6 @@
+#!/bin/sh
+
+exec tmux-autocomplete \
+    --regexp-candidate '\w+://[^ ]+' \
+    --no-prefix \
+    --exec xdg-open

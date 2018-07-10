@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+var (
+	trimLeft  = `(["'`
+	trimRight = `)]"'`
+)
+
 type Candidate struct {
 	*Identifier
 
@@ -28,6 +33,7 @@ func getIdentifierToComplete(
 	x int,
 	y int,
 ) (*Identifier, error) {
+	//log.Println(lines[y])
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
@@ -64,37 +70,61 @@ func getCompletionCandidates(
 
 	var candidates []*Candidate
 
+	type unit struct {
+		value string
+		start int
+	}
+
 	for lineNumber, line := range lines {
 		matches := matcher.FindAllStringIndex(line, -1)
 
 		for _, match := range matches {
-			value := line[match[0]:match[1]]
-
-			if identifier != nil && !strings.HasPrefix(value, identifier.Value) {
-				continue
-			}
-
-			if identifier != nil && value == identifier.Value {
-				continue
-			}
-
 			var (
-				x = len([]rune(line[:match[0]]))
-				y = lineNumber
+				start, end = match[0], match[1]
+				text       = line[start:end]
 			)
 
-			if identifier != nil && x == identifier.X && y == identifier.Y {
-				continue
+			units := []unit{
+				{text, start},
 			}
 
-			candidates = append(candidates, &Candidate{
-				Identifier: &Identifier{
-					X: x,
-					Y: y,
+			trimmed := strings.TrimLeft(text, trimLeft)
+			if len(trimmed) > 0 && trimmed[0] != text[0] {
+				start += len(text) - len(trimmed)
 
-					Value: value,
-				},
-			})
+				units = append(
+					units,
+					unit{strings.TrimRight(trimmed, trimRight), start},
+				)
+			}
+
+			for _, unit := range units {
+				if identifier != nil && !strings.HasPrefix(unit.value, identifier.Value) {
+					continue
+				}
+
+				if identifier != nil && unit.value == identifier.Value {
+					continue
+				}
+
+				var (
+					x = len([]rune(line[:unit.start]))
+					y = lineNumber
+				)
+
+				if identifier != nil && x == identifier.X && y == identifier.Y {
+					continue
+				}
+
+				candidates = append(candidates, &Candidate{
+					Identifier: &Identifier{
+						X: x,
+						Y: y,
+
+						Value: unit.value,
+					},
+				})
+			}
 		}
 	}
 

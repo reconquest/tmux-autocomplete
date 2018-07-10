@@ -1,1 +1,5 @@
 naaaa (bbb) cccc
+"ddd"
+'eee'
+("wwww")
+'("eeee]"

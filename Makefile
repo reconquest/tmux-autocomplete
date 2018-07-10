@@ -10,7 +10,7 @@ DESCRIPTION = Autocompletion system for tmux multiplexer
 FPM := --force \
 	--maintainer "reconquest@gitlab" \
 	--input-type dir \
-	--name $(NAME) \
+	--name tmux-autocomplete \
 	--version $(VERSION) \
 	--description "$(DESCRIPTION)" \
 	--log error \
@@ -23,14 +23,17 @@ build:
 pkg/tree: build
 	@rm -rf pkg/tree
 	@mkdir -p pkg/tree/usr/bin/ pkg/tree/usr/share/tmux-autocomplete/themes/
-	@cp -r themes pkg/tree/usr/share/tmux-autocomplete/
-	@cp $(NAME) pkg/tree/usr/bin/
+	@cp -r share/themes pkg/tree/usr/share/tmux-autocomplete/
+	@cp tmux-autocomplete pkg/tree/usr/bin/
+	@cp tmux-autocomplete pkg/tree/usr/bin/
+	@cp share/tmux-autocomplete-url pkg/tree/usr/bin/
 
 pkg/tree_osx: build
 	@rm -rf pkg/tree_osx
 	@mkdir -p pkg/tree_osx/usr/local/bin/ pkg/tree_osx/usr/local/share/tmux-autocomplete/themes/
-	@cp -r themes pkg/tree_osx/usr/local/share/tmux-autocomplete/
-	@cp $(NAME) pkg/tree_osx/usr/local/bin/
+	@cp -r share/themes pkg/tree_osx/usr/local/share/tmux-autocomplete/
+	@cp tmux-autocomplete pkg/tree_osx/usr/local/bin/
+	@cp share/tmux-autocomplete-url pkg/tree_osx/usr/local/bin/
 
 pkg_arch: pkg/tree
 	@echo '> Building Arch Linux package'

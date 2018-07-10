@@ -19,6 +19,11 @@ import (
 
 var version = "2.0"
 
+const (
+	defaultRegexpCursor    = `[!-~]+`
+	defaultRegexpCandidate = `[!-~]+`
+)
+
 var usage = `tmux-autocomplete - provides autocomplete interface for pane contents.
 
 Usage:
@@ -28,9 +33,9 @@ Usage:
 
 Options:
   -c --regexp-cursor <regexp>     Identifier regexp to match.
-                                   [default: [!-~]+]
+                                   [default: ` + defaultRegexpCursor + `]
   -r --regexp-candidate <regexp>  Candidate regexp to match.
-                                   [default: [!-~]+]
+                                   [default: ` + defaultRegexpCandidate + `]
   -n --no-prefix                  Don't use identifier under cursor as prefix.
   -e --exec <program>             Exec specified program and pass specified candidate as argument.
   --theme <name>                  Name of theme to use. [default: light]
@@ -223,6 +228,8 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 			"unable to make fifo",
 		)
 	}
+
+	defer os.Remove(logsPipe)
 
 	cmd := []string{os.Args[0]}
 
