@@ -133,6 +133,10 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	if len(candidates) == 0 {
+		return
+	}
+
 	if identifier == nil {
 		identifier = candidates[len(candidates)-1].Identifier
 	}

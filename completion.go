@@ -31,7 +31,7 @@ func getIdentifierToComplete(
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
-		`^.*?(` + args["--regexp"].(string) + `)$`,
+		`^.*?(` + args["--regexp-cursor"].(string) + `)$`,
 	)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func getCompletionCandidates(
 	pane *Pane,
 	identifier *Identifier,
 ) ([]*Candidate, error) {
-	matcher, err := regexp.Compile(args["--regexp"].(string))
+	matcher, err := regexp.Compile(args["--regexp-candidate"].(string))
 	if err != nil {
 		return nil, err
 	}
