@@ -6,6 +6,8 @@ VERSION = $(shell printf "%s.%s.%s" \
 	$$(git rev-parse --short HEAD) \
 )
 
+LICENSE_PUBLIC_KEY = $(shell echo 123)
+
 NAME = $(notdir $(PWD))
 
 DESCRIPTION = Autocompletion system for tmux multiplexer
@@ -21,7 +23,10 @@ FPM := --force \
 
 build:
 	@echo '> Building version $(VERSION)'
-	@go build -ldflags="-X=main.version=$(VERSION)" $(GCFLAGS)
+	@go build \
+		-ldflags="-X=main.version=$(VERSION) \
+			-X=main.licensePublicKey=$(LICENSE_PUBLIC_KEY)" \
+		$(GCFLAGS)
 
 pkg/tree: build
 	@rm -rf pkg/tree
