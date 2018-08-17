@@ -17,7 +17,8 @@ import (
 	"github.com/reconquest/karma-go"
 )
 
-var version = "2.0"
+var release = "dev"
+var version = "dev-0-000000"
 
 const (
 	defaultRegexpCursor    = `[!-~]+`
@@ -57,6 +58,10 @@ func main() {
 	)
 	if err != nil {
 		panic(err)
+	}
+
+	if isLicenseExists() {
+		ensureValidLicense()
 	}
 
 	themePath, ok := args["--theme-path"].(string)
@@ -149,7 +154,7 @@ func main() {
 	selectDefaultCandidate(candidates, identifier.X, identifier.Y)
 
 	if len(getUniqueCandidates(candidates)) == 1 {
-		useCurrentCandidate(tmux, pane, identifier, candidates, program)
+		useCurrentCandidate(tmux, pane, theme, identifier, candidates, program)
 
 		return
 	}
@@ -180,7 +185,7 @@ func main() {
 				selectNextCandidate(candidates, 1, 0)
 
 			case termbox.KeyEnter:
-				useCurrentCandidate(tmux, pane, identifier, candidates, program)
+				useCurrentCandidate(tmux, pane, theme, identifier, candidates, program)
 
 				return
 
@@ -390,6 +395,7 @@ func renderCandidates(
 func useCurrentCandidate(
 	tmux *Tmux,
 	pane *Pane,
+	theme *Theme,
 	identifier *Identifier,
 	candidates []*Candidate,
 	program string,
@@ -397,6 +403,10 @@ func useCurrentCandidate(
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
 		return
+	}
+
+	if !isLicenseExists() {
+		nagLicense(tmux, pane, theme)
 	}
 
 	var text string

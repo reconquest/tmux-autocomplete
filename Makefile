@@ -1,31 +1,30 @@
-RELEASE = alpha
-
-VERSION = $(shell printf "%s.%s.%s" \
-	$$(git rev-list --count HEAD) \
-	$(RELEASE) \
-	$$(git rev-parse --short HEAD) \
-)
-
-LICENSE_PUBLIC_KEY = $(shell echo 123)
-
-NAME = $(notdir $(PWD))
-
+NAME = tmux-autocomplete
 DESCRIPTION = Autocompletion system for tmux multiplexer
+
+RELEASE = $(shell git describe --tags --abbrev=0)
+VERSION = $(shell git describe --tags)
+
+define LICENSE_PUBLIC_KEY
+$(shell base64 -w 0 license/$(RELEASE).public)
+endef
 
 FPM := --force \
 	--maintainer "reconquest@gitlab" \
 	--input-type dir \
 	--name tmux-autocomplete \
-	--version $(VERSION) \
+	--version "$(VERSION)" \
 	--description "$(DESCRIPTION)" \
 	--log error \
 	usr/
 
-build:
+version:
+	@echo $(VERSION)
+
+build: license/$(RELEASE).private
 	@echo '> Building version $(VERSION)'
 	@go build \
 		-ldflags="-X=main.version=$(VERSION) \
-			-X=main.licensePublicKey=$(LICENSE_PUBLIC_KEY)" \
+			-X=main.licensePublicKey=$(call LICENSE_PUBLIC_KEY)" \
 		$(GCFLAGS)
 
 pkg/tree: build
@@ -72,5 +71,5 @@ pkg: pkg_arch pkg_deb pkg_rpm pkg_tar
 license/$(RELEASE).private:
 	lkgen gen -o license/$(RELEASE).private
 
-lkpub: license/$(RELEASE).private
+license/$(RELEASE).public: license/$(RELEASE).private
 	lkgen pub -o license/$(RELEASE).public license/$(RELEASE).private
