@@ -5,7 +5,7 @@ RELEASE = $(shell git describe --tags --abbrev=0)
 VERSION = $(shell git describe --tags)
 
 define LICENSE_PUBLIC_KEY
-$(shell base64 -w 0 license/$(RELEASE).public)
+$(shell cat license/$(RELEASE).public)
 endef
 
 FPM := --force \
@@ -24,6 +24,7 @@ build: license/$(RELEASE).private
 	@echo '> Building version $(VERSION)'
 	@go build \
 		-ldflags="-X=main.version=$(VERSION) \
+			-X main.release=$(RELEASE) \
 			-X=main.licensePublicKey=$(call LICENSE_PUBLIC_KEY)" \
 		$(GCFLAGS)
 

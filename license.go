@@ -94,13 +94,10 @@ func isLicenseExists() bool {
 	return !os.IsNotExist(err)
 }
 
-func ensureValidLicense() {
-	publicKey, err := lk.PublicKeyFromB64String(licensePublicKey)
+func getLicense() (*lk.License, error) {
+	publicKey, err := lk.PublicKeyFromB32String(licensePublicKey)
 	if err != nil {
-		fatalln(
-			karma.Format(err, "BUG: unable to decode public license key"),
-			2,
-		)
+		return nil, karma.Format(err, "BUG: unable to decode public license key")
 	}
 
 	path := getLicensePath()
@@ -109,29 +106,39 @@ func ensureValidLicense() {
 
 	licenseData, err := ioutil.ReadFile(path)
 	if err != nil {
-		fatalln(
-			context.Format(err, "unable to read license file"),
-			2,
-		)
+		return nil, context.Format(err, "unable to read license file")
 	}
 
-	license, err := lk.LicenseFromB64String(string(licenseData))
+	license, err := lk.LicenseFromB32String(string(licenseData))
 	if err != nil {
-		fatalln(
-			context.Format(err, "unable to decode license file data"),
-			2,
-		)
+		return nil, context.Format(err, "unable to decode license file data")
 	}
 
 	ok, err := license.Verify(publicKey)
 	if err != nil {
-		fatalln(
-			context.Format(err, "unable to verify license"),
-			2,
-		)
+		return nil, context.Format(err, "unable to verify license")
 	}
 
 	if !ok {
-		fatalln(context.Format(nil, "invalid license"), 2)
+		return nil, nil
+	}
+
+	return license, nil
+}
+
+func ensureValidLicense() {
+	license, err := getLicense()
+	if err != nil {
+		fatalln(err, 2)
+	}
+
+	if license == nil {
+		fatalln(
+			karma.Format(
+				nil,
+				"invalid license: unable to verify using public key",
+			),
+			2,
+		)
 	}
 }
