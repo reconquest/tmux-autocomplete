@@ -42,6 +42,9 @@ func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
     | continued use.                                                 |
     |                                                                |
     | Would you like to purchase a license now?                      |
+    |                                                                |
+    | Press ENTER to open browser for purchasing license.            |
+    | Press Ctrl-C to close this message                             |
     |   _____________________________________________________________|_
      \_/_______________________________________________________________/
 `
