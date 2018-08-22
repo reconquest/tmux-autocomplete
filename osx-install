@@ -15,7 +15,9 @@ fi
 ssh "$ip" -l "$user" bash -s -l <<<'
     cd tmux-autocomplete
     echo ":: Pulling repository"
-    git pull || exit 1
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
+    git pull --rebase origin master || exit 1
     echo ":: Removing old packages"
     rm -rf pkg/
     echo ":: Making package"
