@@ -283,7 +283,21 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 
 	fmt.Fprintln(os.Stderr, "XXXXXX main.go:283 BEFORE read from fifo\n")
 
-	logs, err := ioutil.ReadFile(logsPipe)
+	file, err := os.Open(logsPipe)
+	if err != nil {
+		return karma.Format(
+			err,
+			"unable to open logs file",
+		)
+	}
+
+	fmt.Fprintf(os.Stderr, "XXXXXX main.go:293 opened file\n")
+
+	file.Fd()
+
+	fmt.Fprintf(os.Stderr, "XXXXXX main.go:297 set nonblocking\n")
+
+	logs, err := ioutil.ReadAll(file)
 	if err != nil {
 		return karma.Format(
 			err,
