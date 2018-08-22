@@ -281,6 +281,8 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 			)
 	}
 
+	fmt.Fprintln(os.Stderr, "XXXXXX main.go:283 BEFORE read from fifo\n")
+
 	logs, err := ioutil.ReadFile(logsPipe)
 	if err != nil {
 		return karma.Format(
@@ -288,6 +290,8 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 			"unable to read logs fifo",
 		)
 	}
+
+	fmt.Fprintln(os.Stderr, "XXXXXX main.go:293 AFTER read from fifo\n")
 
 	if len(logs) > 0 {
 		return errors.New(string(logs))
