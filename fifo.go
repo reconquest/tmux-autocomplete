@@ -24,6 +24,7 @@ func mkfifo() (string, error) {
 
 	file, err := os.OpenFile(name, os.O_CREATE, os.ModeNamedPipe)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "XXXXXX fifo.go:26 err: %s\n", err)
 		return "", err
 	}
 
