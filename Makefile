@@ -60,11 +60,12 @@ pkg_rpm: pkg/tree
 
 pkg_tar: pkg/tree
 	@echo '> Building TAR package'
-	@mkdir pkg/rpm/
+	@mkdir pkg/tar/
 	@fpm -t tar -p pkg/tar/tmux-autocomplete_VERSION_ARCH.tar -C pkg/tree $(FPM)
 
 pkg_osx: pkg/tree_osx
 	@echo '> Building OSX package'
+	@mkdir pkg/osx/
 	@fpm -t osxpkg -p pkg/osx/tmux-autocomplete_VERSION_ARCH.pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
 		-C pkg/tree_osx \
