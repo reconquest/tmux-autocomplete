@@ -72,8 +72,8 @@ func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEnter:
-				cmd := exec.Command("xdg-open", "http://dead.archi/")
-				cmd.Run()
+				cmd := exec.Command("xdg-open", "https://tmux.reconquest.io/")
+				cmd.Start()
 				return
 
 			case termbox.KeyCtrlC:
