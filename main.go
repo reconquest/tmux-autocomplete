@@ -281,8 +281,6 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 			)
 	}
 
-	fmt.Fprintln(os.Stderr, "XXXXXX main.go:283 BEFORE read from fifo\n")
-
 	file, err := os.Open(logsPipe)
 	if err != nil {
 		return karma.Format(
@@ -291,11 +289,10 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		)
 	}
 
-	fmt.Fprintf(os.Stderr, "XXXXXX main.go:293 opened file\n")
-
+	// Fd() does side effect - set nonblocking mode
+	// set nonblocking mode
+	// https://github.com/golang/go/issues/24164#issuecomment-370097226
 	file.Fd()
-
-	fmt.Fprintf(os.Stderr, "XXXXXX main.go:297 set nonblocking\n")
 
 	logs, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -304,8 +301,6 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 			"unable to read logs fifo",
 		)
 	}
-
-	fmt.Fprintln(os.Stderr, "XXXXXX main.go:293 AFTER read from fifo\n")
 
 	if len(logs) > 0 {
 		return errors.New(string(logs))
