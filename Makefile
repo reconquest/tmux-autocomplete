@@ -45,23 +45,27 @@ pkg/tree_osx: build
 
 pkg_arch: pkg/tree
 	@echo '> Building Arch Linux package'
-	@fpm -t pacman -p pkg/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz -C pkg/tree $(FPM)
+	@mkdir pkg/arch/
+	@fpm -t pacman -p pkg/arch/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz -C pkg/tree $(FPM)
 
 pkg_deb: pkg/tree
 	@echo '> Building Debian package'
-	@fpm -t deb -p pkg/tmux-autocomplete_VERSION_ARCH.deb -C pkg/tree $(FPM)
+	@mkdir pkg/deb/
+	@fpm -t deb -p pkg/deb/tmux-autocomplete_VERSION_ARCH.deb -C pkg/tree $(FPM)
 
 pkg_rpm: pkg/tree
 	@echo '> Building RPM package'
-	@fpm -t rpm -p pkg/tmux-autocomplete_VERSION_ARCH.rpm -C pkg/tree $(FPM)
+	@mkdir pkg/rpm/
+	@fpm -t rpm -p pkg/rpm/tmux-autocomplete_VERSION_ARCH.rpm -C pkg/tree $(FPM)
 
 pkg_tar: pkg/tree
 	@echo '> Building TAR package'
-	@fpm -t tar -p pkg/tmux-autocomplete_VERSION_ARCH.tar -C pkg/tree $(FPM)
+	@mkdir pkg/rpm/
+	@fpm -t tar -p pkg/tar/tmux-autocomplete_VERSION_ARCH.tar -C pkg/tree $(FPM)
 
 pkg_osx: pkg/tree_osx
 	@echo '> Building OSX package'
-	@fpm -t osxpkg -p pkg/tmux-autocomplete_VERSION_ARCH.pkg \
+	@fpm -t osxpkg -p pkg/osx/tmux-autocomplete_VERSION_ARCH.pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
 		-C pkg/tree_osx \
 		$(FPM)
