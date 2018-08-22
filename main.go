@@ -270,6 +270,7 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		}
 	}
 
+	fmt.Fprintf(os.Stderr, "XXXXXX main.go:272 starting -W\n")
 	cmd = append(cmd, pane, cursorX, cursorY, "-W", "2>"+logsPipe)
 
 	err = tmux.NewWindow(cmd...)
