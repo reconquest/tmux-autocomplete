@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/hyperboloide/lk"
@@ -73,6 +74,10 @@ func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
 			switch ev.Key {
 			case termbox.KeyEnter:
 				cmd := exec.Command("xdg-open", "https://tmux.reconquest.io/")
+				cmd.SysProcAttr = &syscall.SysProcAttr{
+					Setpgid: true,
+				}
+
 				cmd.Start()
 				return
 
