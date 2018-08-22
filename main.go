@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/docopt/docopt-go"
+	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
 	"github.com/nsf/termbox-go"
 	"github.com/reconquest/executil-go"
@@ -88,6 +89,11 @@ func main() {
 	tmux := &Tmux{}
 
 	if !args["-W"].(bool) {
+		if isatty.IsTerminal() {
+			printIntroductionMessage()
+			os.Exit(1)
+		}
+
 		err := start(args, themePath, tmux)
 		if err != nil {
 			fatalln(

@@ -33,7 +33,6 @@ func getIdentifierToComplete(
 	x int,
 	y int,
 ) (*Identifier, error) {
-	//log.Println(lines[y])
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
