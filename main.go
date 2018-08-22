@@ -89,7 +89,7 @@ func main() {
 	tmux := &Tmux{}
 
 	if !args["-W"].(bool) {
-		if isatty.IsTerminal() {
+		if isatty.IsTerminal(os.Stdin.Fd()) {
 			printIntroductionMessage()
 			os.Exit(1)
 		}
