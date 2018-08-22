@@ -3,6 +3,15 @@
 ip="85.17.1.95"
 user="Egor"
 
+output=$(git status --porcelain -sb)
+if [[ "$output" ]]; then
+    echo "!!! WARNING: repository is not synced"
+    echo "$output"
+    echo
+    echo "Press Enter to continue."
+    read
+fi
+
 ssh "$ip" -l "$user" bash -s -l <<<'
     cd tmux-autocomplete
     echo ":: Pulling repository"
