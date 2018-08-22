@@ -231,7 +231,7 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		)
 	}
 
-	logsFile, logsName, err := mkfifo()
+	logsPipe, err := mkfifo()
 	if err != nil {
 		return karma.Format(
 			err,
@@ -239,8 +239,7 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		)
 	}
 
-	defer os.Remove(logsName)
-	defer logsFile.Close()
+	defer os.Remove(logsPipe)
 
 	cmd := []string{os.Args[0]}
 
@@ -271,8 +270,7 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "XXXXXX main.go:272 starting -W\n")
-	cmd = append(cmd, pane, cursorX, cursorY, "-W", "2>"+logsName)
+	cmd = append(cmd, pane, cursorX, cursorY, "-W", "2>"+logsPipe)
 
 	err = tmux.NewWindow(cmd...)
 	if err != nil {
@@ -285,7 +283,7 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 
 	fmt.Fprintln(os.Stderr, "XXXXXX main.go:283 BEFORE read from fifo\n")
 
-	logs, err := ioutil.ReadAll(logsFile)
+	logs, err := ioutil.ReadFile(logsPipe)
 	if err != nil {
 		return karma.Format(
 			err,
