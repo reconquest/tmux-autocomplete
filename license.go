@@ -5,9 +5,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/hyperboloide/lk"
@@ -17,6 +15,10 @@ import (
 )
 
 var licensePublicKey = ""
+
+const (
+	licenseURL = "https://tmux.reconquest.io/"
+)
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -73,12 +75,8 @@ func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEnter:
-				cmd := exec.Command("xdg-open", "https://tmux.reconquest.io/")
-				cmd.SysProcAttr = &syscall.SysProcAttr{
-					Setpgid: true,
-				}
+				openBrowser(licenseURL)
 
-				cmd.Start()
 				return
 
 			case termbox.KeyCtrlC:
