@@ -65,7 +65,7 @@ pkg_tar: pkg_tree/linux
 
 pkg_osx: pkg_tree/osx
 	@echo '> Building OSX package'
-	@mkdir pkg/osx/
+	@mkdir -p pkg/osx/
 	@fpm -t osxpkg -p pkg/osx/tmux-autocomplete_$(VERSION).pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
 		-C pkg_tree/osx \

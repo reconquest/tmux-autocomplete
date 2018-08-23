@@ -23,5 +23,5 @@ ssh "$ip" -l "$user" bash -s -l <<<'
     echo ":: Making package"
     make pkg_osx || exit 2
     echo ":: Installing"
-    sudo installer -pkg pkg/osx/*_native.pkg -target / -verbose
+    sudo installer -pkg pkg/osx/*.pkg -target / -verbose
 '
