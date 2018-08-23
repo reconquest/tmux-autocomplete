@@ -28,47 +28,47 @@ build: license/$(RELEASE).private
 			-X=main.licensePublicKey=$(call LICENSE_PUBLIC_KEY)" \
 		$(GCFLAGS)
 
-pkg/tree: build
-	@rm -rf pkg/tree
-	@mkdir -p pkg/tree/usr/bin/ pkg/tree/usr/share/tmux-autocomplete/themes/
-	@cp -r share/themes pkg/tree/usr/share/tmux-autocomplete/
-	@cp tmux-autocomplete pkg/tree/usr/bin/
-	@cp tmux-autocomplete pkg/tree/usr/bin/
-	@cp share/tmux-autocomplete-url pkg/tree/usr/bin/
+pkg_tree/linux: build
+	@rm -rf pkg_tree/linux
+	@mkdir -p pkg_tree/linux/usr/bin/ pkg_tree/linux/usr/share/tmux-autocomplete/themes/
+	@cp -r share/themes pkg_tree/linux/usr/share/tmux-autocomplete/
+	@cp tmux-autocomplete pkg_tree/linux/usr/bin/
+	@cp tmux-autocomplete pkg_tree/linux/usr/bin/
+	@cp share/tmux-autocomplete-url pkg_tree/linux/usr/bin/
 
-pkg/tree_osx: build
-	@rm -rf pkg/tree_osx
-	@mkdir -p pkg/tree_osx/usr/local/bin/ pkg/tree_osx/usr/local/share/tmux-autocomplete/themes/
-	@cp -r share/themes pkg/tree_osx/usr/local/share/tmux-autocomplete/
-	@cp tmux-autocomplete pkg/tree_osx/usr/local/bin/
-	@cp share/tmux-autocomplete-url pkg/tree_osx/usr/local/bin/
+pkg_tree/osx: build
+	@rm -rf pkg_tree/osx
+	@mkdir -p pkg_tree/osx/usr/local/bin/ pkg_tree/osx/usr/local/share/tmux-autocomplete/themes/
+	@cp -r share/themes pkg_tree/osx/usr/local/share/tmux-autocomplete/
+	@cp tmux-autocomplete pkg_tree/osx/usr/local/bin/
+	@cp share/tmux-autocomplete-url pkg_tree/osx/usr/local/bin/
 
-pkg_arch: pkg/tree
+pkg_arch: pkg_tree/linux
 	@echo '> Building Arch Linux package'
-	@mkdir pkg/arch/
-	@fpm -t pacman -p pkg/arch/tmux-autocomplete_VERSION_ARCH.pkg.tar.xz -C pkg/tree $(FPM)
+	@mkdir -p pkg/arch/
+	@fpm -t pacman -p pkg/arch/tmux-autocomplete_$(VERSION).pkg.tar.xz -C pkg_tree/linux $(FPM)
 
-pkg_deb: pkg/tree
+pkg_deb: pkg_tree/linux
 	@echo '> Building Debian package'
-	@mkdir pkg/deb/
-	@fpm -t deb -p pkg/deb/tmux-autocomplete_VERSION_ARCH.deb -C pkg/tree $(FPM)
+	@mkdir -p pkg/deb/
+	@fpm -t deb -p pkg/deb/tmux-autocomplete_$(VERSION).deb -C pkg_tree/linux $(FPM)
 
-pkg_rpm: pkg/tree
+pkg_rpm: pkg_tree/linux
 	@echo '> Building RPM package'
-	@mkdir pkg/rpm/
-	@fpm -t rpm -p pkg/rpm/tmux-autocomplete_VERSION_ARCH.rpm -C pkg/tree $(FPM)
+	@mkdir -p pkg/rpm/
+	@fpm -t rpm -p pkg/rpm/tmux-autocomplete_$(VERSION).rpm -C pkg_tree/linux $(FPM)
 
-pkg_tar: pkg/tree
+pkg_tar: pkg_tree/linux
 	@echo '> Building TAR package'
-	@mkdir pkg/tar/
-	@fpm -t tar -p pkg/tar/tmux-autocomplete_VERSION_ARCH.tar -C pkg/tree $(FPM)
+	@mkdir -p pkg/tar/
+	@fpm -t tar -p pkg/tar/tmux-autocomplete_$(VERSION).tar -C pkg_tree/linux $(FPM)
 
-pkg_osx: pkg/tree_osx
+pkg_osx: pkg_tree/osx
 	@echo '> Building OSX package'
 	@mkdir pkg/osx/
-	@fpm -t osxpkg -p pkg/osx/tmux-autocomplete_VERSION_ARCH.pkg \
+	@fpm -t osxpkg -p pkg/osx/tmux-autocomplete_$(VERSION).pkg \
 		--osxpkg-identifier-prefix com.gitlab.reconquest \
-		-C pkg/tree_osx \
+		-C pkg_tree/osx \
 		$(FPM)
 
 .PHONY: pkg
