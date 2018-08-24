@@ -430,7 +430,10 @@ func useCurrentCandidate(
 	}
 
 	if !isLicenseExists() {
-		nagLicense(tmux, pane, theme)
+		err := nagLicense(tmux, pane, theme)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	var text string

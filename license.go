@@ -24,9 +24,16 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
+func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) error {
 	if rand.Intn(10) != 0 {
-		return
+		return nil
+	}
+
+	if !termbox.IsInit {
+		err := termbox.Init()
+		if err != nil {
+			return err
+		}
 	}
 
 	moveCursor(0, 0)
@@ -80,10 +87,10 @@ func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) {
 			case termbox.KeyEnter:
 				openBrowser(licenseURL)
 
-				return
+				return nil
 
 			case termbox.KeyCtrlC:
-				return
+				return nil
 			}
 		}
 	}
