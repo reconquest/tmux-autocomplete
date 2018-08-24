@@ -182,25 +182,33 @@ func main() {
 
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
-			switch ev.Key {
-			case termbox.KeyArrowUp:
+			switch {
+			case ev.Ch == 'k':
+				fallthrough
+			case ev.Key == termbox.KeyArrowUp:
 				selectNextCandidate(candidates, 0, -1)
 
-			case termbox.KeyArrowDown:
+			case ev.Ch == 'j':
+				fallthrough
+			case ev.Key == termbox.KeyArrowDown:
 				selectNextCandidate(candidates, 0, 1)
 
-			case termbox.KeyArrowLeft:
+			case ev.Ch == 'h':
+				fallthrough
+			case ev.Key == termbox.KeyArrowLeft:
 				selectNextCandidate(candidates, -1, 0)
 
-			case termbox.KeyArrowRight:
+			case ev.Ch == 'l':
+				fallthrough
+			case ev.Key == termbox.KeyArrowRight:
 				selectNextCandidate(candidates, 1, 0)
 
-			case termbox.KeyEnter:
+			case ev.Key == termbox.KeyEnter:
 				useCurrentCandidate(tmux, pane, theme, identifier, candidates, program)
 
 				return
 
-			case termbox.KeyCtrlC:
+			case ev.Key == termbox.KeyCtrlC:
 				return
 			}
 
