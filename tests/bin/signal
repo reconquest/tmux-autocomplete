@@ -1,0 +1,3 @@
+#!/bin/bash
+
+tmux -L tmux-autocomplete-tests wait-for -S signal

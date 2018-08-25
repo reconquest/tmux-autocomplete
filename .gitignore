@@ -1,3 +1,5 @@
 /tmux-autocomplete
 /pkg
 /pkg_tree
+.last-testcase
+.cover
