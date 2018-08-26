@@ -2,7 +2,7 @@ NAME = tmux-autocomplete
 DESCRIPTION = Autocompletion system for tmux multiplexer
 
 RELEASE = $(shell git describe --tags --abbrev=0)
-VERSION = $(shell git describe --tags | sed -r -e 's/-/./g')
+VERSION = $(shell git describe --tags | sed 's/\-/./g')
 
 define LICENSE_PUBLIC_KEY
 $(shell cat license/$(RELEASE).public)
