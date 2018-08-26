@@ -9,6 +9,7 @@ $(shell cat license/$(RELEASE).public)
 endef
 
 FPM := --force \
+	--url "https://tmux.reconquest.io/" \
 	--maintainer "reconquest@gitlab" \
 	--input-type dir \
 	--name tmux-autocomplete \
