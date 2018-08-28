@@ -17,7 +17,7 @@ ssh "$ip" -l "$user" bash -s -l <<<'
     echo ":: Pulling repository"
     git config --global user.email "you@example.com"
     git config --global user.name "Your Name"
-    git pull --rebase origin master || exit 1
+    git pull --tags --rebase origin master || exit 1
     echo ":: Removing old packages"
     rm -rf pkg/
     echo ":: Making package"
