@@ -165,7 +165,15 @@ func main() {
 	selectDefaultCandidate(candidates, identifier.X, identifier.Y)
 
 	if len(getUniqueCandidates(candidates)) == 1 {
-		useCurrentCandidate(tmux, pane, theme, identifier, candidates, program)
+		useCurrentCandidate(
+			tmux,
+			pane,
+			theme,
+			identifier,
+			candidates,
+			program,
+			withPrefix,
+		)
 
 		return
 	}
@@ -204,7 +212,15 @@ func main() {
 				selectNextCandidate(candidates, 1, 0)
 
 			case ev.Key == termbox.KeyEnter:
-				useCurrentCandidate(tmux, pane, theme, identifier, candidates, program)
+				useCurrentCandidate(
+					tmux,
+					pane,
+					theme,
+					identifier,
+					candidates,
+					program,
+					withPrefix,
+				)
 
 				return
 
@@ -431,6 +447,7 @@ func useCurrentCandidate(
 	identifier *Identifier,
 	candidates []*Candidate,
 	program string,
+	withPrefix bool,
 ) {
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
@@ -450,7 +467,10 @@ func useCurrentCandidate(
 		// identifier prefix
 		text = selected.Value
 	} else {
-		text = string([]rune(selected.Value)[identifier.Length():])
+		text = selected.Value
+		if withPrefix {
+			text = string([]rune(text)[identifier.Length():])
+		}
 	}
 
 	if program != "" {
