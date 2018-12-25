@@ -70,7 +70,53 @@ func (pane *Pane) GetPrintable() []string {
 	for _, line := range pane.Lines {
 		line = reEscapeSequence.ReplaceAllLiteralString(line, ``)
 
-		printable = append(printable, line)
+		inGrid := false
+		symbols := []rune(line)
+		for i := 0; i < len(symbols); i++ {
+			symbol := symbols[i]
+			if symbol == '\x0e' {
+				inGrid = true
+				symbols = append(symbols[:i], symbols[i+1:]...)
+				i--
+				continue
+			}
+
+			if symbol == '\x0f' {
+				inGrid = false
+				symbols = append(symbols[:i], symbols[i+1:]...)
+				i--
+				continue
+			}
+
+			if inGrid {
+				switch symbol {
+				case 'l':
+					symbols[i] = '┌'
+				case 'q':
+					symbols[i] = '─'
+				case 'w':
+					symbols[i] = '┬'
+				case 'k':
+					symbols[i] = '┐'
+				case 'x':
+					symbols[i] = '│'
+				case 't':
+					symbols[i] = '├'
+				case 'u':
+					symbols[i] = '┤'
+				case 'n':
+					symbols[i] = '┼'
+				case 'v':
+					symbols[i] = '┴'
+				case 'm':
+					symbols[i] = '└'
+				case 'j':
+					symbols[i] = '┘'
+				}
+			}
+		}
+
+		printable = append(printable, string(symbols))
 	}
 
 	return printable
