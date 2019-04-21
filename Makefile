@@ -89,3 +89,6 @@ license/$(RELEASE).private:
 
 license/$(RELEASE).public: license/$(RELEASE).private
 	lkgen pub -o license/$(RELEASE).public license/$(RELEASE).private
+
+clean:
+	rm -rf pkg/ tmux-autocomplete
