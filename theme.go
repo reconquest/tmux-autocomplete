@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/kovetskiy/ko"
 	"github.com/reconquest/karma-go"
+	yaml "gopkg.in/coryb/yaml.v2"
 )
 
 type Theme struct {

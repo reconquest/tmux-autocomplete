@@ -135,6 +135,15 @@ func main() {
 
 	x, y := pane.GetBufferXY(lines, cursorX, cursorY)
 
+	report.CursorX = cursorX
+	report.CursorY = cursorY
+	report.Pane = pane
+	report.Lines = report.Lines
+
+	defer func() {
+		writeReport(recover())
+	}()
+
 	var identifier *Identifier
 	if withPrefix {
 		identifier, err = getIdentifierToComplete(args, lines, x, y)

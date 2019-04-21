@@ -8,11 +8,11 @@ import (
 var reEscapeSequence = regexp.MustCompile(`\x1b\[([^m]+)m`)
 
 type Pane struct {
-	ID    string
-	Lines []string
+	ID    string   `json:"id,omitempty"`
+	Lines []string `json:"lines,omitempty"`
 
-	Width  int
-	Height int
+	Width  int `json:"width,omitempty"`
+	Height int `json:"height,omitempty"`
 }
 
 func CapturePane(tmux *Tmux, id string, args ...string) (*Pane, error) {
