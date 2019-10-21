@@ -11,7 +11,7 @@ endef
 
 FPM := --force \
 	--url "https://tmux.reconquest.io/" \
-	--maintainer "reconquest@gitlab" \
+	--maintainer "we@reconquest.io" \
 	--input-type dir \
 	--name tmux-autocomplete \
 	--version "$(VERSION)" \
