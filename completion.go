@@ -57,12 +57,11 @@ func getIdentifierToComplete(
 }
 
 func getCompletionCandidates(
-	args map[string]interface{},
+	regexpCandidate string,
 	lines []string,
-	pane *Pane,
 	identifier *Identifier,
 ) ([]*Candidate, error) {
-	matcher, err := regexp.Compile(args["--regexp-candidate"].(string))
+	matcher, err := regexp.Compile(regexpCandidate)
 	if err != nil {
 		return nil, err
 	}

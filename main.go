@@ -18,8 +18,10 @@ import (
 	"github.com/reconquest/karma-go"
 )
 
-var release = "dev"
-var version = "dev-0-000000"
+var (
+	release = "dev"
+	version = "dev-0-000000"
+)
 
 const (
 	defaultRegexpCursor    = `[!-~]+`
@@ -138,7 +140,7 @@ func main() {
 	report.CursorX = cursorX
 	report.CursorY = cursorY
 	report.Pane = pane
-	report.Lines = report.Lines
+	report.Lines = lines
 
 	defer func() {
 		writeReport(recover())
@@ -158,7 +160,11 @@ func main() {
 
 	moveCursor(cursorX, cursorY)
 
-	candidates, err := getCompletionCandidates(args, lines, pane, identifier)
+	candidates, err := getCompletionCandidates(
+		args["--regexp-candidate"].(string),
+		lines,
+		identifier,
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}

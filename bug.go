@@ -11,15 +11,13 @@ import (
 	"time"
 )
 
-var (
-	report = struct {
-		CursorX int `json:"cursor_x,omitempty"`
-		CursorY int `json:"cursor_y,omitempty"`
+var report = struct {
+	CursorX int `json:"cursor_x,omitempty"`
+	CursorY int `json:"cursor_y,omitempty"`
 
-		Pane  *Pane    `json:"pane,omitempty"`
-		Lines []string `json:"lines,omitempty"`
-	}{}
-)
+	Pane  *Pane    `json:"pane,omitempty"`
+	Lines []string `json:"lines,omitempty"`
+}{}
 
 func writeReport(reason interface{}) {
 	if reason == nil {
@@ -47,7 +45,7 @@ func writeReport(reason interface{}) {
 
 	err := ioutil.WriteFile(filename, data, 0644)
 	if err != nil {
-		log.Println("unable to write bug report into file: %q", filename)
+		log.Printf("unable to write bug report into file: %q", filename)
 		log.Println(string(data))
 		os.Exit(137)
 	}
