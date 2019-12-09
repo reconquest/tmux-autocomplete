@@ -5,10 +5,7 @@ import (
 	"strings"
 )
 
-var (
-	trimLeft  = `(["'`
-	trimRight = `)]"'`
-)
+var trimRight = `)]"'`
 
 type Candidate struct {
 	*Identifier
@@ -86,13 +83,12 @@ func getCompletionCandidates(
 				{text, start},
 			}
 
-			trimmed := strings.TrimLeft(text, trimLeft)
-			if len(trimmed) > 0 && trimmed[0] != text[0] {
-				start += len(text) - len(trimmed)
+			trimmed := strings.TrimRight(text, trimRight)
 
+			if len(trimmed) > 0 && trimmed != text {
 				units = append(
 					units,
-					unit{strings.TrimRight(trimmed, trimRight), start},
+					unit{trimmed, start},
 				)
 			}
 
