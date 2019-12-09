@@ -148,7 +148,7 @@ func main() {
 
 	var identifier *Identifier
 	if withPrefix {
-		identifier, err = getIdentifierToComplete(args, lines, x, y)
+		identifier, err = getIdentifierToComplete(args["--regexp-cursor"].(string), lines, x, y)
 		if err != nil {
 			log.Fatalln(err)
 		}

@@ -28,7 +28,7 @@ func (identifier *Identifier) Length() int {
 }
 
 func getIdentifierToComplete(
-	args map[string]interface{},
+	regexpCursor string,
 	lines []string,
 	x int,
 	y int,
@@ -36,7 +36,7 @@ func getIdentifierToComplete(
 	textBeforeCursor := string([]rune(lines[y])[:x])
 
 	matcher, err := regexp.Compile(
-		`^.*?(` + args["--regexp-cursor"].(string) + `)$`,
+		`^.*?(` + regexpCursor + `)$`,
 	)
 	if err != nil {
 		return nil, err
