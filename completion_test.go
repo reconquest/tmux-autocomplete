@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,11 +27,18 @@ func TestCompletion(t *testing.T) {
 		panic(err)
 	}
 
+	only := os.Getenv("ONLY")
+	if only != "" {
+		log.Printf("filter for testcases: *%s*", only)
+	}
+
 	testcases := []testcase{}
 	for _, scenario := range scenarios {
 		// ignore dirs
 		if isFileExists(scenario) {
-			testcases = append(testcases, getTestcase(scenario))
+			if strings.Contains(scenario, only) {
+				testcases = append(testcases, getTestcase(scenario))
+			}
 		}
 	}
 

@@ -25,7 +25,7 @@ var (
 
 const (
 	defaultRegexpCursor    = `[!-~]+`
-	defaultRegexpCandidate = `[!-~]+`
+	defaultRegexpCandidate = `[^<>]+`
 )
 
 var usage = `tmux-autocomplete - provides autocomplete interface for pane contents.

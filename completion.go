@@ -61,7 +61,7 @@ func getCompletionCandidates(
 	lines []string,
 	identifier *Identifier,
 ) ([]*Candidate, error) {
-	matcher, err := regexp.Compile(regexpCandidate)
+	matcher, err := regexp.Compile(regexp.QuoteMeta(identifier.Value) + regexpCandidate)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func getCompletionCandidates(
 	}
 
 	for lineNumber, line := range lines {
-		matches := matcher.FindAllStringIndex(line, -1)
+		matches := matcher.FindAllStringSubmatchIndex(line, -1)
 
 		for _, match := range matches {
 			var (
