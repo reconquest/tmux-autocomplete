@@ -73,6 +73,8 @@ func TestCompletion(t *testing.T) {
 		values := []string{}
 		for _, candidate := range candidates {
 			values = append(values, candidate.Value)
+
+			log.Printf("candidate=%s y=%d x=%d", candidate.Value, candidate.Y, candidate.X)
 		}
 
 		test.EqualValues(testcase.expected, values, "%s", testcase.path)

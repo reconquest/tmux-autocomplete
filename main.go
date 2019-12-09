@@ -200,8 +200,8 @@ func main() {
 
 	for {
 		renderPane(pane, theme)
-		renderIdentifier(tmux, lines, pane, theme, identifier)
-		renderCandidates(tmux, lines, pane, theme, candidates)
+		renderIdentifier(lines, pane, theme, identifier)
+		renderCandidates(lines, pane, theme, candidates)
 
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
@@ -421,7 +421,6 @@ func decolorize(sequence string, theme *Theme) string {
 }
 
 func renderIdentifier(
-	tmux *Tmux,
 	lines []string,
 	pane *Pane,
 	theme *Theme,
@@ -433,26 +432,46 @@ func renderIdentifier(
 }
 
 func renderCandidates(
-	tmux *Tmux,
 	lines []string,
 	pane *Pane,
 	theme *Theme,
 	candidates []*Candidate,
 ) {
+	// first we need to draw existing candidates
 	for _, candidate := range candidates {
-		x := candidate.X
-		y := candidate.Y
-
-		moveCursor(pane.GetScreenXY(lines, x, y))
-
-		color := theme.Candidate.Normal
-
-		if candidate.Selected {
-			color = theme.Candidate.Selected
+		if !candidate.Selected {
+			renderCandidate(lines, pane, theme, candidate)
 		}
-
-		fmt.Print(ansi.ColorFunc(color)(candidate.Value))
 	}
+
+	// and only then we draw selected one
+	// otherwise we can have incorrect color for selected candidate (it will
+	// partially look like 'normal' candidate)
+	for _, candidate := range candidates {
+		if candidate.Selected {
+			renderCandidate(lines, pane, theme, candidate)
+		}
+	}
+}
+
+func renderCandidate(
+	lines []string,
+	pane *Pane,
+	theme *Theme,
+	candidate *Candidate,
+) {
+	x := candidate.X
+	y := candidate.Y
+
+	moveCursor(pane.GetScreenXY(lines, x, y))
+
+	color := theme.Candidate.Normal
+
+	if candidate.Selected {
+		color = theme.Candidate.Selected
+	}
+
+	fmt.Print(ansi.ColorFunc(color)(candidate.Value))
 }
 
 func useCurrentCandidate(

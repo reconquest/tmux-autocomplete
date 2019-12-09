@@ -1,1 +1,2 @@
-! choices are incorrect in case of ping 127.1 and prompt 12
+! choices are correct in case of ping 127.1 and prompt 12 but user cant choose
+    127.0.0.1 due to overlapping 127.0.0.1)
