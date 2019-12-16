@@ -58,7 +58,12 @@ func getCompletionCandidates(
 	lines []string,
 	identifier *Identifier,
 ) ([]*Candidate, error) {
-	matcher, err := regexp.Compile(regexp.QuoteMeta(identifier.Value) + regexpCandidate)
+	query := regexpCandidate
+	if identifier != nil {
+		query = regexp.QuoteMeta(identifier.Value) + regexpCandidate
+	}
+
+	matcher, err := regexp.Compile(query)
 	if err != nil {
 		return nil, err
 	}
