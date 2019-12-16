@@ -46,9 +46,12 @@ Options:
                                    * ` + defaultSystemThemePath + `
                                    * ` + defaultUserThemePath + `
                                    You can specify multiple directories using : separator.
+  --debug <file>                  Print debug messages into specified file.
   -v --version                    Print version.
   -h --help                       Show this help.
 `
+
+var debug = log.New(ioutil.Discard, "", 0)
 
 func main() {
 	args, err := docopt.Parse(
@@ -106,6 +109,17 @@ func main() {
 		}
 
 		return
+	}
+
+	if path, ok := args["--debug"].(string); ok {
+		out, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		defer out.Close()
+
+		debug = log.New(out, "", log.Lshortfile|log.Ltime)
 	}
 
 	var (
@@ -291,6 +305,8 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		case "--theme-path":
 			cmd = append(cmd, flag, fmt.Sprintf("%q", themePath))
 		case "--regexp":
+			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+		case "--debug":
 			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
 		default:
 			switch typed := value.(type) {

@@ -1,2 +1,9 @@
-! choices are correct in case of ping 127.1 and prompt 12 but user cant choose
-    127.0.0.1 due to overlapping 127.0.0.1)
+* need to write tests for selectors
+
+* splitter mode: split candidates by a separator such as / or : can be
+    interesting
+
+* there could be a movement that will avoid comparing length of value for
+    X-movements and will jump to the next X item instantly
+
+<!-- vim: ft=markdown

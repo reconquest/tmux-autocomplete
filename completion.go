@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var trimRight = `)]"'`
+var trimRight = `)]"':`
 
 type Candidate struct {
 	*Identifier
@@ -187,79 +187,160 @@ func selectDefaultCandidate(
 	closest.Selected = true
 }
 
+func debugCandidate(candidate *Candidate) {
+	selected := ""
+	if candidate.Selected {
+		selected = " (selected)"
+	}
+	debug.Printf(
+		"y: %-3v x: %-3v length: %-3v value: %s%s",
+		candidate.Y,
+		candidate.X,
+		candidate.Length(),
+		candidate.Value,
+		selected,
+	)
+}
+
+// the following code has many if-conditions that can be omitted, but please do
+// not refactor it, it has been made consciously in order to reduce cognitive
+// load
 func selectNextCandidate(
 	candidates []*Candidate,
 	dirX int,
 	dirY int,
 ) {
-	sign := func(value int) int {
-		switch {
-		case value > 0:
-			return 1
-		case value < 0:
-			return -1
-		default:
-			return 0
-		}
-	}
+	debug.Printf("selecting next candidate")
 
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
 		return
 	}
 
-	space := []*Candidate{}
+	next := []*Candidate{}
 
 	for _, candidate := range candidates {
-		signX := sign(dirX)
-		signY := sign(dirY)
-
-		offsetX := sign(candidate.X - selected.X)
-		offsetY := sign(candidate.Y - selected.Y)
-
-		if dirY == 0 {
-			if offsetY != 0 {
-				continue
-			}
-
-			if signX != offsetX {
-				continue
-			}
-		} else {
-			if signY != offsetY {
-				continue
-			}
+		if isNextCandidate(selected, dirX, dirY, candidate) {
+			next = append(next, candidate)
 		}
-
-		space = append(space, candidate)
 	}
 
-	if len(space) == 0 {
+	if len(next) == 0 {
 		return
 	}
 
-	closest := space[0]
+	closest := next[0]
 
-	abs := func(x int) int {
-		if x < 0 {
-			x = -x
-		}
-
-		return x
-	}
-
-	for _, candidate := range space {
-		distanceY := abs(selected.Y-candidate.Y) - abs(selected.Y-closest.Y)
+	for _, candidate := range next {
 		distanceX := abs(selected.X-candidate.X) - abs(selected.X-closest.X)
 
-		if distanceY < 0 || distanceY == 0 && distanceX < 0 {
-			closest = candidate
-			continue
+		switch {
+		case dirY != 0:
+			distanceY := abs(selected.Y-candidate.Y) - abs(selected.Y-closest.Y)
+			if distanceY < 0 {
+				closest = candidate
+				continue
+			}
+
+			if distanceY == 0 && distanceX < 0 {
+				closest = candidate
+				continue
+			}
+
+		case dirX != 0:
+			if distanceX < 0 {
+				closest = candidate
+				continue
+			}
+
+			if dirX == 1 {
+				// looking for size greater than selected but the difference
+				// should be as small as possible
+				if candidate.Length() > selected.Length() && candidate.Length() < closest.Length() {
+					closest = candidate
+				}
+			} else {
+				// looking for size less than selected but the difference
+				// should be as small as possible (near to selected as possible)
+				if candidate.Length() < selected.Length() && candidate.Length() > closest.Length() {
+					closest = candidate
+				}
+			}
 		}
 	}
 
 	closest.Selected = true
 	selected.Selected = false
+}
+
+func isNextCandidate(selected *Candidate, dirX, dirY int, candidate *Candidate) bool {
+	debugCandidate(candidate)
+
+	signX := sign(dirX)
+	signY := sign(dirY)
+
+	offsetX := sign(candidate.X - selected.X)
+	offsetY := sign(candidate.Y - selected.Y)
+
+	if dirX != 0 {
+		// case: move horizontally
+		if offsetY != 0 {
+			// not interested in vertical moves in horizontal mode
+			return false
+		}
+
+		debug.Printf("signX: %d offsetX: %d", signX, offsetX)
+		if signX == offsetX {
+			return true
+		}
+
+		// wrong direction
+
+		if offsetX == 0 {
+			// that case is possible when we have two items on the same
+			// X coordinate but with different length of identifier
+			if signX > 0 {
+				// move right
+				if candidate.Length() > selected.Length() {
+					// not interested in less size, candidate length should be
+					// greater than slected
+					return true
+				}
+			} else {
+				// move left
+				if candidate.Length() < selected.Length() {
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+	// case: move vertically
+	if signY == offsetY {
+		return true
+	}
+
+	return false
+}
+
+func abs(x int) int {
+	if x < 0 {
+		x = -x
+	}
+
+	return x
+}
+
+func sign(value int) int {
+	switch {
+	case value > 0:
+		return 1
+	case value < 0:
+		return -1
+	default:
+		return 0
+	}
 }
 
 func getUniqueCandidates(candidates []*Candidate) []*Candidate {
