@@ -18,9 +18,11 @@ import:use "github.com/reconquest/test-runner.bash"
 
     make build
 
-    test-runner:set-local-setup tests/setup.sh
-    test-runner:set-local-teardown tests/teardown.sh
-    test-runner:set-testcases-dir tests/testcases
+    cd integration_tests
+
+    test-runner:set-local-setup setup.sh
+    test-runner:set-local-teardown teardown.sh
+    test-runner:set-testcases-dir testcases
 
     test-runner:run "${@}"
 }

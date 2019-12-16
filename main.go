@@ -65,6 +65,17 @@ func main() {
 		panic(err)
 	}
 
+	if path, ok := args["--debug"].(string); ok {
+		out, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		defer out.Close()
+
+		debug = log.New(out, "", log.Lshortfile|log.Ltime)
+	}
+
 	if args["--license"].(bool) {
 		handleLicenseInfo()
 	}
@@ -109,17 +120,6 @@ func main() {
 		}
 
 		return
-	}
-
-	if path, ok := args["--debug"].(string); ok {
-		out, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			panic(err)
-		}
-
-		defer out.Close()
-
-		debug = log.New(out, "", log.Lshortfile|log.Ltime)
 	}
 
 	var (

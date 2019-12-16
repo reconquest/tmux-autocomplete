@@ -1,10 +1,10 @@
 #!/bin/bash
 
-tests:clone "tmux-autocomplete" "bin/tests-tmux-autocomplete"
-tests:clone "tests/bin/print-data" "bin/"
-tests:clone "tests/bin/signal" "bin/"
-tests:clone "tests/bash.rc" "."
-tests:clone "tests/tmux.conf" "."
+tests:clone "../tmux-autocomplete" "bin/tests-tmux-autocomplete"
+tests:clone "bin/print-data" "bin/"
+tests:clone "bin/signal" "bin/"
+tests:clone "bash.rc" "."
+tests:clone "tmux.conf" "."
 
 :tmux() {
     tests:debug tmux -L "tmux-autocomplete-tests" -f $(tests:get-tmp-dir)/tmux.conf "${@}"
@@ -52,7 +52,7 @@ tests:clone "tests/tmux.conf" "."
 
 :tmux-complete() {
     coproc:run ta \
-        :tmux run $(tests:get-tmp-dir)/bin/tests-tmux-autocomplete
+        :tmux run $(tests:get-tmp-dir)/bin/tests-tmux-autocomplete --debug /tmp/debug
 
     coproc:get-stdin-fd $ta stdin
     # doesn't work without these calls, the process will not start.

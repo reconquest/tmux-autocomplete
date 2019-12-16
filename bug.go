@@ -52,10 +52,9 @@ func writeReport(reason interface{}) {
 
 	fmt.Fprintf(os.Stderr,
 		"The program exited unexpectedly, it means that you've encountered a bug,\n"+
-			"but we already collected a bug report.\n\n"+
-			"Please check that this file doesn't have any sensitive information: %s\n"+
-			"and if you don't mind, please help us to solve the bug by "+
-			"sending this report to we@reconquest.io\n",
+			"but we have collected the bug report.\n\n"+
+			"Make sure the file doesn't have any sensitive information: %s\n"+
+			"Please help us to solve the bug by sending this report to we@reconquest.io\n",
 		filename,
 	)
 
