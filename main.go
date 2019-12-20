@@ -185,13 +185,15 @@ func main() {
 		return
 	}
 
+	candidates = getUniqueCandidates(candidates)
+
 	if identifier == nil {
 		identifier = candidates[len(candidates)-1].Identifier
 	}
 
 	selectDefaultCandidate(candidates, identifier.X, identifier.Y)
 
-	if len(getUniqueCandidates(candidates)) == 1 {
+	if len(candidates) == 1 {
 		useCurrentCandidate(
 			tmux,
 			pane,

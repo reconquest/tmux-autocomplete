@@ -346,16 +346,15 @@ func sign(value int) int {
 func getUniqueCandidates(candidates []*Candidate) []*Candidate {
 	uniques := []*Candidate{}
 
+mainLoop:
 	for _, candidate := range candidates {
 		for _, unique := range uniques {
 			if unique.Value == candidate.Value {
-				goto skip
+				continue mainLoop
 			}
 		}
 
 		uniques = append(uniques, candidate)
-
-	skip:
 	}
 
 	return uniques

@@ -6,4 +6,5 @@
 * there could be a movement that will avoid comparing length of value for
     X-movements and will jump to the next X item instantly
 
+* no protection from two processes of tmux-autocomplete at the same time
 <!-- vim: ft=markdown
