@@ -158,9 +158,12 @@ func selectDefaultCandidate(
 	var closest *Candidate
 
 	for _, candidate := range candidates {
+		// never select nested candidates as default
+		// there should be a parent
 		if candidate.Parent != "" {
 			continue
 		}
+
 		if closest == nil {
 			closest = candidate
 			continue

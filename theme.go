@@ -18,6 +18,7 @@ type Theme struct {
 	Candidate struct {
 		Normal   string `required:"true"`
 		Selected string `required:"true"`
+		// Nested   string `required:"true"`
 	} `required:"true"`
 
 	Fog struct {

@@ -479,10 +479,16 @@ func renderCandidate(
 
 	moveCursor(pane.GetScreenXY(lines, x, y))
 
-	color := theme.Candidate.Normal
-
-	if candidate.Selected {
+	var color string
+	switch {
+	case candidate.Selected:
 		color = theme.Candidate.Selected
+
+	// case candidate.Parent != "":
+	//    color = theme.Candidate.Nested
+
+	default:
+		color = theme.Candidate.Normal
 	}
 
 	fmt.Print(ansi.ColorFunc(color)(candidate.Value))
