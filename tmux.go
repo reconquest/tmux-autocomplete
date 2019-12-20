@@ -34,7 +34,7 @@ func (tmux *Tmux) CapturePane(args ...string) (string, error) {
 	return pane, nil
 }
 
-func (tmux *Tmux) GetPaneSize(args ...string) (int, int, error) {
+func (tmux *Tmux) GetPaneSize() (int, int, error) {
 	var width int
 	var height int
 
@@ -43,7 +43,6 @@ func (tmux *Tmux) GetPaneSize(args ...string) (int, int, error) {
 			"pane_width":  &width,
 			"pane_height": &height,
 		},
-		args...,
 	)
 	if err != nil {
 		return 0, 0, err
@@ -52,7 +51,7 @@ func (tmux *Tmux) GetPaneSize(args ...string) (int, int, error) {
 	return width, height, nil
 }
 
-func (tmux *Tmux) Eval(values map[string]interface{}, args ...string) error {
+func (tmux *Tmux) Eval(values map[string]interface{}) error {
 	format := []string{}
 	binds := []interface{}{}
 

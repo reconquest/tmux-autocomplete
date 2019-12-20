@@ -24,7 +24,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func nagLicense(tmux *Tmux, pane *Pane, theme *Theme) error {
+func nagLicense(pane *Pane) error {
 	if rand.Intn(10) != 0 {
 		return nil
 	}

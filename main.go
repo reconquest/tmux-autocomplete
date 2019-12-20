@@ -195,7 +195,6 @@ func main() {
 		useCurrentCandidate(
 			tmux,
 			pane,
-			theme,
 			identifier,
 			candidates,
 			program,
@@ -242,7 +241,6 @@ func main() {
 				useCurrentCandidate(
 					tmux,
 					pane,
-					theme,
 					identifier,
 					candidates,
 					program,
@@ -491,7 +489,6 @@ func renderCandidate(
 func useCurrentCandidate(
 	tmux *Tmux,
 	pane *Pane,
-	theme *Theme,
 	identifier *Identifier,
 	candidates []*Candidate,
 	program string,
@@ -503,7 +500,7 @@ func useCurrentCandidate(
 	}
 
 	if !isLicenseExists() {
-		err := nagLicense(tmux, pane, theme)
+		err := nagLicense(pane)
 		if err != nil {
 			log.Fatalln(err)
 		}
