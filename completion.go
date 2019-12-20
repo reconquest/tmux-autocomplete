@@ -11,6 +11,7 @@ type Candidate struct {
 	*Identifier
 
 	Selected bool
+	Parent   string
 }
 
 type Identifier struct {
@@ -97,7 +98,7 @@ func getCompletionCandidates(
 				)
 			}
 
-			for _, unit := range units {
+			for number, unit := range units {
 				if identifier != nil && !strings.HasPrefix(unit.value, identifier.Value) {
 					continue
 				}
@@ -115,6 +116,10 @@ func getCompletionCandidates(
 					continue
 				}
 
+				parent := ""
+				if number > 0 {
+					parent = text
+				}
 				candidates = append(candidates, &Candidate{
 					Identifier: &Identifier{
 						X: x,
@@ -122,6 +127,7 @@ func getCompletionCandidates(
 
 						Value: unit.value,
 					},
+					Parent: parent,
 				})
 			}
 		}
@@ -152,6 +158,9 @@ func selectDefaultCandidate(
 	var closest *Candidate
 
 	for _, candidate := range candidates {
+		if candidate.Parent != "" {
+			continue
+		}
 		if closest == nil {
 			closest = candidate
 			continue
@@ -349,7 +358,7 @@ func getUniqueCandidates(candidates []*Candidate) []*Candidate {
 mainLoop:
 	for _, candidate := range candidates {
 		for _, unique := range uniques {
-			if unique.Value == candidate.Value {
+			if unique.Value == candidate.Value && unique.Parent == candidate.Parent {
 				continue mainLoop
 			}
 		}
