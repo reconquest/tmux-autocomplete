@@ -93,6 +93,7 @@ license/$(RELEASE).public: license/$(RELEASE).private
 clean:
 	rm -rf pkg/ tmux-autocomplete
 
+.PHONY: upload
 upload:
 	@echo ":: Uploading new archives to remote host"
 	@./upload
