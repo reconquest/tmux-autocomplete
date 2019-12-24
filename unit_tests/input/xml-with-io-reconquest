@@ -1,0 +1,25 @@
+                <entity>io.reconquest.bitbucket.snake.ao.Runner</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.RunnerToken</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.Pipeline</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.PipelineJob</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.ProjectEnvironment</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.RepositoryEnvironment</entity>
+        <repository-hook key="snake-post-receive-hook" name="Snake Post Receive Hook" i18n-name-key="snake-post-receive-hook.name" class="io.reconquest.bitbucket.snake.hook.SnakePostReceiveHook">
+    <servlet name="Snake CI Settings Runners Servlet" key="rq.snake.servlet.settings.runners" class="io.reconquest.bitbucket.snake.servlet.pages.SettingsRunners">
+    <servlet name="Snake CI Repo Pipelines Servlet" key="rq.snake.servlet.repo.pipelines" class="io.reconquest.bitbucket.snake.servlet.pages.RepositoryPipelines">
+    <servlet name="Snake CI Repo Jobs Servlet" key="rq.snake.servlet.repo.jobs" class="io.reconquest.bitbucket.snake.servlet.pages.RepositoryJobs">
+    <servlet name="Snake CI Repo Env Variables" key="rq.snake.servlet.repo.env" class="io.reconquest.bitbucket.snake.servlet.pages.RepositoryEnvVariables">
+                class="io.reconquest.bitbucket.snake.service.SnakeServiceLauncher"
+        <component key="dao" class="io.reconquest.bitbucket.snake.dao.Dao" />
+        <component key="runnerDao" class="io.reconquest.bitbucket.snake.dao.RunnerDao" />
+        <component key="runnerTokenDao" class="io.reconquest.bitbucket.snake.dao.RunnerTokenDao" />
+        <component key="pipelineDao" class="io.reconquest.bitbucket.snake.dao.PipelineDao" />
+        <component key="pipelineJobDao" class="io.reconquest.bitbucket.snake.dao.PipelineJobDao" />
+        <component key="environmentDao" class="io.reconquest.bitbucket.snake.dao.EnvironmentDao" />
+        <component key="pipelineService" class="io.reconquest.bitbucket.snake.service.PipelineService" />
+                <entity>io.reconquest.bitbucket.snake.ao.Runner</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.RunnerToken</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.Pipeline</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.PipelineJob</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.ProjectEnvironment</entity>
+                <entity>io.reconquest.bitbucket.snake.ao.RepositoryEnvironment</entity>

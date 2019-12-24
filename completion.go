@@ -359,7 +359,9 @@ func getUniqueCandidates(candidates []*Candidate) []*Candidate {
 	uniques := []*Candidate{}
 
 mainLoop:
-	for _, candidate := range candidates {
+	for i := len(candidates) - 1; i >= 0; i-- {
+		candidate := candidates[i]
+
 		for _, unique := range uniques {
 			if unique.Value == candidate.Value && unique.Parent == candidate.Parent {
 				continue mainLoop
@@ -369,5 +371,10 @@ mainLoop:
 		uniques = append(uniques, candidate)
 	}
 
-	return uniques
+	reversed := []*Candidate{}
+	for i := len(uniques) - 1; i >= 0; i-- {
+		reversed = append(reversed, uniques[i])
+	}
+
+	return reversed
 }
