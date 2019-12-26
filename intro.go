@@ -10,7 +10,7 @@ const (
 tmux-autocomplete should not be running from terminal, it should be running
 using tmux bindings, put following line to your ~/.tmux.conf:
 
-  bind-key C-Space run 'tmux-autocomplete'
+  bind-key C-Space run -b 'tmux-autocomplete'
 
 Then reload tmux configuration using following command:
 
