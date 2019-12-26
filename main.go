@@ -307,7 +307,9 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		case "--regexp":
 			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
 		case "--debug":
-			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+			if value != nil {
+				cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+			}
 		default:
 			switch typed := value.(type) {
 			case string:
