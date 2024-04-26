@@ -34,7 +34,6 @@ Usage:
   tmux-autocomplete [options] -W <pane> <cursor-x> <cursor-y>
 
 Options:
-  --license                       Show license information.
   -c --regexp-cursor <regexp>     Identifier regexp to match.
                                    [default: ` + defaultRegexpCursor + `]
   -r --regexp-candidate <regexp>  Candidate regexp to match.
@@ -74,14 +73,6 @@ func main() {
 		defer out.Close()
 
 		debug = log.New(out, "", log.Lshortfile|log.Ltime)
-	}
-
-	if args["--license"].(bool) {
-		handleLicenseInfo()
-	}
-
-	if isLicenseExists() {
-		ensureValidLicense()
 	}
 
 	themePath, ok := args["--theme-path"].(string)
@@ -507,13 +498,6 @@ func useCurrentCandidate(
 	selected := getSelectedCandidate(candidates)
 	if selected == nil {
 		return
-	}
-
-	if !isLicenseExists() {
-		err := nagLicense(pane)
-		if err != nil {
-			log.Fatalln(err)
-		}
 	}
 
 	var text string
