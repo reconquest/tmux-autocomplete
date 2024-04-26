@@ -5,9 +5,6 @@ RELEASE = $(shell git describe --tags --abbrev=0)
 RELEASE = alpha
 VERSION = $(shell git describe --tags | sed 's/\-/./g')
 
-define LICENSE_PUBLIC_KEY
-$(shell cat license/$(RELEASE).public)
-endef
 
 FPM := --force \
 	--url "https://tmux.reconquest.io/" \
@@ -22,12 +19,11 @@ FPM := --force \
 version:
 	@echo $(VERSION)
 
-build: license/$(RELEASE).private
+build: 
 	@echo ':: Building version $(VERSION)'
 	@go build \
 		-ldflags="-X=main.version=$(VERSION) \
-			-X main.release=$(RELEASE) \
-			-X=main.licensePublicKey=$(call LICENSE_PUBLIC_KEY)" \
+			-X main.release=$(RELEASE)" \
 		$(GCFLAGS)
 
 pkg_tree/linux: build
@@ -83,12 +79,6 @@ release: pkg
 	./osx-package
 	@echo ":: Uploading new archives to remote host"
 	@./upload
-
-license/$(RELEASE).private:
-	lkgen gen -o license/$(RELEASE).private
-
-license/$(RELEASE).public: license/$(RELEASE).private
-	lkgen pub -o license/$(RELEASE).public license/$(RELEASE).private
 
 clean:
 	rm -rf pkg/ tmux-autocomplete
