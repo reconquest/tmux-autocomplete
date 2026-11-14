@@ -1,8 +1,15 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //nolint:gosmopolitan // Wide-glyph fixtures verify terminal cell coordinates.
@@ -347,5 +354,93 @@ func TestPanePrintable(t *testing.T) {
 	empty := (&Pane{}).GetPrintable()
 	if empty == nil || len(empty) != 0 {
 		t.Errorf("empty printable lines = %#v, want non-nil empty slice", empty)
+	}
+}
+
+func TestPaneLocaleMatrix(t *testing.T) {
+	t.Parallel()
+
+	binary, err := os.Executable()
+	require.NoError(t, err)
+
+	for _, locale := range []string{"C.UTF-8", "ja_JP.UTF-8"} {
+		for _, eastAsian := range []string{"", "0", "1"} {
+			t.Run(locale+"/east-asian="+eastAsian, func(t *testing.T) {
+				t.Parallel()
+
+				ctx, cancel := context.WithTimeout(
+					context.Background(),
+					30*time.Second,
+				)
+				defer cancel()
+
+				// #nosec G204 -- Execute only this test binary.
+				command := exec.CommandContext(
+					ctx,
+					binary,
+					"-test.run=^TestPane(BufferCoordinates|"+
+						"ScreenCoordinates|Printable|LocalePrefix)$",
+					"-test.count=1",
+				)
+
+				command.Env = append(os.Environ(),
+					"LC_ALL="+locale,
+					"LC_CTYPE="+locale,
+					"LANG="+locale,
+					"RUNEWIDTH_EASTASIAN="+eastAsian,
+				)
+
+				output, runErr := command.CombinedOutput()
+				require.NoErrorf(t, runErr, "locale subprocess: %s", output)
+			})
+		}
+	}
+}
+
+func TestPaneLocalePrefix(t *testing.T) {
+	t.Parallel()
+
+	for _, testcase := range []struct {
+		name   string
+		width  int
+		cursor [2]int
+	}{
+		{name: "unwrapped", width: 8, cursor: [2]int{4, 0}},
+		{name: "pending wrap", width: 4, cursor: [2]int{4, 0}},
+		{name: "wrapped", width: 3, cursor: [2]int{1, 1}},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+
+			pane := Pane{Width: testcase.width, Lines: []string{"é he"}}
+			lines := pane.GetPrintable()
+			column, row := pane.GetBufferXY(
+				lines, testcase.cursor[0], testcase.cursor[1],
+			)
+			assert.Equal(t, [2]int{4, 0}, [2]int{column, row})
+
+			identifier, err := getIdentifierToComplete(
+				defaultRegexpCursor, lines, column, row,
+			)
+			require.NoError(t, err)
+			require.Equal(t, &Identifier{X: 2, Y: 0, Value: "he"}, identifier)
+
+			column, row = pane.GetScreenXY(lines, identifier.X, identifier.Y)
+			assert.Equal(t, [2]int{2, 0}, [2]int{column, row})
+
+			column, row = pane.GetBufferXY(lines, column, row)
+			assert.Equal(t, [2]int{2, 0}, [2]int{column, row})
+
+			column, row = pane.GetScreenXY(
+				lines, identifier.X+identifier.Length(), identifier.Y,
+			)
+			if got := [2]int{column, row}; got != testcase.cursor {
+				t.Errorf(
+					"screen coordinates = %v, want %v",
+					got,
+					testcase.cursor,
+				)
+			}
+		})
 	}
 }

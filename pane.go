@@ -115,13 +115,19 @@ func (pane *Pane) screenOffset(lines []string) int {
 	return offset
 }
 
+func tmuxNarrowAmbiguousRuneWidth(symbol rune) int {
+	condition := runewidth.Condition{EastAsianWidth: false}
+
+	return condition.RuneWidth(symbol)
+}
+
 func bufferColumn(line string, positions []int, cell int) int {
 	if cell > positions[len(positions)-1] {
 		return -1
 	}
 
 	for index, symbol := range []rune(line) {
-		width := runewidth.RuneWidth(symbol)
+		width := tmuxNarrowAmbiguousRuneWidth(symbol)
 		if width > 0 && positions[index]+width > cell {
 			return index
 		}
@@ -135,7 +141,7 @@ func (pane *Pane) getLinePositions(line string) paneLineLayout {
 	cells := 0
 
 	for _, symbol := range line {
-		width := runewidth.RuneWidth(symbol)
+		width := tmuxNarrowAmbiguousRuneWidth(symbol)
 		column := cells % pane.Width
 
 		if column > 0 && column+width > pane.Width {
