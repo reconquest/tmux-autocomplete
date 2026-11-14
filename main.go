@@ -202,10 +202,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	displayPane := *pane
+	displayPane.Width, displayPane.Height = termbox.Size()
+
 	for {
-		renderPane(pane, theme)
-		renderIdentifier(lines, pane, theme, identifier)
-		renderCandidates(lines, pane, theme, candidates)
+		renderPane(&displayPane, theme)
+		renderIdentifier(lines, &displayPane, theme, identifier)
+		renderCandidates(lines, &displayPane, theme, candidates)
 
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
@@ -244,6 +247,12 @@ func main() {
 
 			case ev.Key == termbox.KeyCtrlC:
 				return
+			}
+
+		case termbox.EventResize:
+			displayPane.Width, displayPane.Height = ev.Width, ev.Height
+			if err := termbox.Sync(); err != nil {
+				log.Fatalln(err)
 			}
 
 		case termbox.EventError:

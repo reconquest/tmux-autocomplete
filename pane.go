@@ -21,7 +21,7 @@ func CapturePane(tmux *Tmux, id string, args ...string) (*Pane, error) {
 		return nil, err
 	}
 
-	width, height, err := tmux.GetPaneSize()
+	width, height, err := tmux.GetPaneSize("-t", id)
 	if err != nil {
 		return nil, err
 	}

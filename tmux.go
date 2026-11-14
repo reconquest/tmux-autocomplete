@@ -34,7 +34,7 @@ func (tmux *Tmux) CapturePane(args ...string) (string, error) {
 	return pane, nil
 }
 
-func (tmux *Tmux) GetPaneSize() (int, int, error) {
+func (tmux *Tmux) GetPaneSize(args ...string) (int, int, error) {
 	var width int
 	var height int
 
@@ -43,6 +43,7 @@ func (tmux *Tmux) GetPaneSize() (int, int, error) {
 			"pane_width":  &width,
 			"pane_height": &height,
 		},
+		args...,
 	)
 	if err != nil {
 		return 0, 0, err
@@ -51,7 +52,7 @@ func (tmux *Tmux) GetPaneSize() (int, int, error) {
 	return width, height, nil
 }
 
-func (tmux *Tmux) Eval(values map[string]interface{}) error {
+func (tmux *Tmux) Eval(values map[string]interface{}, args ...string) error {
 	format := []string{}
 	binds := []interface{}{}
 
@@ -60,11 +61,10 @@ func (tmux *Tmux) Eval(values map[string]interface{}) error {
 		binds = append(binds, bind)
 	}
 
-	reply, err := tmux.exec(
-		"display-message",
-		"-p",
-		strings.Join(format, "\t"),
-	)
+	args = append([]string{"-p"}, args...)
+	args = append(args, strings.Join(format, "\t"))
+
+	reply, err := tmux.exec("display-message", args...)
 	if err != nil {
 		return err
 	}
