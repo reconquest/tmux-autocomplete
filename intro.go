@@ -34,5 +34,5 @@ If you have any questions, don't hesitate to contact us:
 )
 
 func printIntroductionMessage() {
-	fmt.Println(intro)
+	fmt.Print(intro)
 }
