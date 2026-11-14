@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/reconquest/karma-go"
 )
 
 const (
@@ -42,7 +44,7 @@ func (report *panicReport) write(reason any) error {
 		log.Printf("unable to write bug report into file: %q", filename)
 		log.Println(string(data))
 
-		return fmt.Errorf("write bug report: %w", err)
+		return karma.Describe("path", filename).Format(err, "write bug report")
 	}
 
 	_, err = fmt.Fprintf(
@@ -56,7 +58,7 @@ func (report *panicReport) write(reason any) error {
 		filename,
 	)
 	if err != nil {
-		return fmt.Errorf("write bug report notice: %w", err)
+		return karma.Format(err, "write bug report notice")
 	}
 
 	return nil

@@ -107,7 +107,7 @@ func (command *command) dispatch(args *arguments, options docopt.Opts) {
 	if err != nil {
 		command.fail(karma.Describe("path", args.ValueThemePath).
 			Describe("theme", args.ValueTheme).
-			Format(err, "unable to load theme"), exitTheme)
+			Format(err, "load theme"), exitTheme)
 
 		return
 	}
@@ -152,7 +152,7 @@ func (command *command) launch(
 	err := start(options, themePath, tmux)
 	if err != nil {
 		command.fail(
-			karma.Format(err, "unable to start tmux-autocomplete"), exitStart,
+			karma.Format(err, "start tmux-autocomplete"), exitStart,
 		)
 	}
 }
@@ -185,7 +185,7 @@ func (command *command) work(args *arguments, tmux *Tmux, theme *Theme) {
 func (command *command) fail(reason any, code int) {
 	_, err := fmt.Fprintln(os.Stdout, reason)
 	if err != nil {
-		log.Printf("unable to write error: %v", err)
+		log.Print(karma.Format(err, "write failure notice"))
 	}
 
 	log.Println(reason)
@@ -201,7 +201,7 @@ func openDebug(path string) (*os.File, error) {
 		debugFileMode,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("open debug log: %w", err)
+		return nil, karma.Describe("path", path).Format(err, "open debug log")
 	}
 
 	debug = log.New(out, "", log.Lshortfile|log.Ltime)
@@ -212,6 +212,6 @@ func openDebug(path string) (*os.File, error) {
 func closeLogged(file *os.File) {
 	err := file.Close()
 	if err != nil {
-		log.Printf("unable to close %q: %v", file.Name(), err)
+		log.Print(karma.Describe("path", file.Name()).Format(err, "close file"))
 	}
 }

@@ -202,6 +202,9 @@ linters:
       multi-func: false
     wrapcheck:
       report-internal-errors: false
+      extra-ignore-sigs:
+      - github.com/reconquest/karma-go.Format(
+      - (*github.com/reconquest/karma-go.Context).Format(
     wsl_v5:
       default: all
       allow-first-in-block: true

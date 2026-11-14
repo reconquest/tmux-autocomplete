@@ -2,12 +2,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/kovetskiy/ko"
+	"github.com/reconquest/karma-go"
 
 	yaml "gopkg.in/coryb/yaml.v2"
 )
@@ -54,7 +54,7 @@ func LoadTheme(dirs, name string) (*Theme, error) {
 			continue
 		}
 
-		return nil, fmt.Errorf("unable to read theme file: %s: %w", path, err)
+		return nil, karma.Describe("path", path).Format(err, "read theme file")
 	}
 
 	return nil, errors.New("no such theme found")

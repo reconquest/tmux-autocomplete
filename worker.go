@@ -8,6 +8,7 @@ import (
 
 	"github.com/nsf/termbox-go"
 	"github.com/reconquest/executil-go"
+	"github.com/reconquest/karma-go"
 )
 
 type worker struct {
@@ -26,17 +27,17 @@ func captureWorker(args *arguments, tmux *Tmux) (*worker, error) {
 
 	_, err := fmt.Sscan(args.ValueCursorX, &worker.cursorX)
 	if err != nil {
-		return nil, fmt.Errorf("parse cursor x: %w", err)
+		return nil, karma.Format(err, "parse cursor x")
 	}
 
 	_, err = fmt.Sscan(args.ValueCursorY, &worker.cursorY)
 	if err != nil {
-		return nil, fmt.Errorf("parse cursor y: %w", err)
+		return nil, karma.Format(err, "parse cursor y")
 	}
 
 	worker.pane, err = CapturePane(tmux, args.ValuePane, "-eJ")
 	if err != nil {
-		return nil, fmt.Errorf("capture completion pane: %w", err)
+		return nil, karma.Format(err, "capture completion pane")
 	}
 
 	worker.lines = worker.pane.GetPrintable()
@@ -59,7 +60,9 @@ func (worker *worker) complete(theme *Theme) error {
 		cursorSequence(worker.cursorX, worker.cursorY),
 	)
 	if err != nil {
-		return fmt.Errorf("move cursor: %w", err)
+		return karma.Describe("x", worker.cursorX).
+			Describe("y", worker.cursorY).
+			Format(err, "move cursor")
 	}
 
 	err = worker.findCandidates()
@@ -92,7 +95,7 @@ func (worker *worker) findIdentifier() error {
 		worker.args.ValueCursorRegexp, worker.lines, column, row,
 	)
 	if err != nil {
-		return fmt.Errorf("find completion identifier: %w", err)
+		return karma.Format(err, "find completion identifier")
 	}
 
 	worker.identifier = identifier
@@ -105,7 +108,7 @@ func (worker *worker) findCandidates() error {
 		worker.args.ValueCandidateRegexp, worker.lines, worker.identifier,
 	)
 	if err != nil {
-		return fmt.Errorf("find completion candidates: %w", err)
+		return karma.Format(err, "find completion candidates")
 	}
 
 	if len(candidates) == 0 {
@@ -129,7 +132,7 @@ func (worker *worker) findCandidates() error {
 func (worker *worker) selectCandidate(theme *Theme) error {
 	err := termbox.Init()
 	if err != nil {
-		return fmt.Errorf("initialize terminal: %w", err)
+		return karma.Format(err, "initialize terminal")
 	}
 
 	displayPane := *worker.pane
@@ -166,7 +169,7 @@ func (worker *worker) render(displayPane *Pane, theme *Theme) error {
 
 	_, err := fmt.Fprint(os.Stdout, text)
 	if err != nil {
-		return fmt.Errorf("render completion: %w", err)
+		return karma.Format(err, "render completion")
 	}
 
 	return nil
@@ -184,11 +187,13 @@ func (worker *worker) handleEvent(
 
 		err := termbox.Sync()
 		if err != nil {
-			return false, fmt.Errorf("sync resized terminal: %w", err)
+			return false, karma.Describe("width", event.Width).
+				Describe("height", event.Height).
+				Format(err, "sync resized terminal")
 		}
 
 	case termbox.EventError:
-		return false, fmt.Errorf("read terminal event: %w", event.Err)
+		return false, karma.Format(event.Err, "read terminal event")
 
 	case termbox.EventMouse, termbox.EventInterrupt,
 		termbox.EventRaw, termbox.EventNone:
@@ -244,7 +249,8 @@ func (worker *worker) useCurrentCandidate() error {
 
 	err := worker.tmux.Paste(text, "-t", worker.pane.ID)
 	if err != nil {
-		return fmt.Errorf("paste completion: %w", err)
+		return karma.Describe("pane", worker.pane.ID).
+			Format(err, "paste completion")
 	}
 
 	return nil
@@ -256,7 +262,8 @@ func executeCandidate(program, text string) error {
 
 	_, _, err := executil.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("execute completion program: %w", err)
+		return karma.Describe("program", program).
+			Format(err, "execute completion program")
 	}
 
 	return nil

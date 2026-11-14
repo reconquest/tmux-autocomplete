@@ -82,7 +82,7 @@ func (tmux *Tmux) Eval(values map[string]any, args ...string) error {
 
 	_, err = fmt.Sscan(reply, binds...)
 	if err != nil {
-		return fmt.Errorf("scan tmux format values: %w", err)
+		return karma.Format(err, "scan tmux format values")
 	}
 
 	return nil
@@ -119,10 +119,10 @@ func (tmux *Tmux) exec(command string, args ...string) (string, error) {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(output), karma.
-			Describe("args", fmt.Sprintf("%q", args)).
+			Describe("command", command).
 			Format(
 				err,
-				"unable to exec tmux command",
+				"exec tmux command",
 			)
 	}
 

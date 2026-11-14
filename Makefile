@@ -1,6 +1,10 @@
 NAME = tmux-autocomplete
 DESCRIPTION = Autocompletion system for tmux multiplexer
 
+KARMALINT_VERSION = v0.0.0-20260916065501-c4b3f257b48f
+KARMALINT = GOOS=$(shell go env GOHOSTOS) GOARCH=$(shell go env GOHOSTARCH) \
+	go run github.com/reconquest/karma-go/cmd/karmalint@$(KARMALINT_VERSION)
+
 RELEASE = $(shell git describe --tags --abbrev=0)
 RELEASE = alpha
 VERSION = $(shell git describe --tags | sed 's/\-/./g')
@@ -91,3 +95,4 @@ upload:
 .PHONY: lint
 lint:
 	golangci-lint run --uniq-by-line=false ./...
+	$(KARMALINT) ./...

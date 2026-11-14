@@ -121,7 +121,7 @@ func TestTmuxErrors(t *testing.T) {
 	t.Setenv("TMUX_STATUS", "1")
 
 	output, err := tmux.exec("capture-pane")
-	require.ErrorContains(t, err, "unable to exec tmux command")
+	require.ErrorContains(t, err, "exec tmux command")
 	require.Equal(t, "not a number", output)
 
 	require.NoError(t, os.Remove(filepath.Join(directory, "args")))

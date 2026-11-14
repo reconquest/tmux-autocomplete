@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/reconquest/karma-go"
 )
 
 func start(args map[string]any, themePath string, tmux *Tmux) error {
@@ -16,12 +18,12 @@ func start(args map[string]any, themePath string, tmux *Tmux) error {
 		"pane_id": &pane, "cursor_x": &cursorX, "cursor_y": &cursorY,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to get current pane/cursor: %w", err)
+		return karma.Format(err, "get current pane/cursor")
 	}
 
 	logsPipe, err := mkfifo()
 	if err != nil {
-		return fmt.Errorf("unable to make fifo: %w", err)
+		return karma.Format(err, "make fifo")
 	}
 	defer removeLogged(logsPipe)
 
@@ -32,7 +34,7 @@ func start(args map[string]any, themePath string, tmux *Tmux) error {
 
 	err = tmux.NewWindow(cmd...)
 	if err != nil {
-		return fmt.Errorf("unable to create new tmux window: %w", err)
+		return karma.Format(err, "create new tmux window")
 	}
 
 	return readWorkerLogs(logsPipe)
@@ -93,7 +95,7 @@ func readWorkerLogs(logsPipe string) error {
 	// #nosec G304 -- Read the FIFO created for this worker.
 	file, err := os.Open(logsPipe)
 	if err != nil {
-		return fmt.Errorf("unable to open logs file: %w", err)
+		return karma.Describe("path", logsPipe).Format(err, "open worker logs")
 	}
 	defer closeLogged(file)
 
@@ -101,7 +103,7 @@ func readWorkerLogs(logsPipe string) error {
 
 	logs, err := io.ReadAll(file)
 	if err != nil {
-		return fmt.Errorf("unable to read logs fifo: %w", err)
+		return karma.Describe("path", logsPipe).Format(err, "read worker logs")
 	}
 
 	if len(logs) > 0 {
@@ -114,7 +116,9 @@ func readWorkerLogs(logsPipe string) error {
 func removeLogged(path string) {
 	err := os.Remove(path)
 	if err != nil {
-		log.Printf("unable to remove %q: %v", path, err)
+		log.Print(
+			karma.Describe("path", path).Format(err, "remove worker logs"),
+		)
 	}
 }
 

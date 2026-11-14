@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/docopt/docopt-go"
+	"github.com/reconquest/karma-go"
 )
 
 type arguments struct {
@@ -25,7 +24,7 @@ func bindArguments(options docopt.Opts) (arguments, error) {
 
 	err := options.Bind(&args)
 	if err != nil {
-		return arguments{}, fmt.Errorf("bind command arguments: %w", err)
+		return arguments{}, karma.Format(err, "bind command arguments")
 	}
 
 	if options["--theme-path"] == nil {

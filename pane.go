@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/reconquest/karma-go"
 )
 
 var reEscapeSequence = regexp.MustCompile(`\x1b\[([^m]+)m`)
@@ -28,12 +29,12 @@ func CapturePane(tmux *Tmux, paneID string, args ...string) (*Pane, error) {
 	contents, err := tmux.CapturePane(
 		append([]string{"-t", paneID}, args...)...)
 	if err != nil {
-		return nil, err
+		return nil, karma.Describe("pane", paneID).Format(err, "capture pane")
 	}
 
 	width, height, err := tmux.GetPaneSize("-t", paneID)
 	if err != nil {
-		return nil, err
+		return nil, karma.Describe("pane", paneID).Format(err, "get pane size")
 	}
 
 	return &Pane{

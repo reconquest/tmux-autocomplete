@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/reconquest/karma-go"
 )
 
 const trimRight = `)]"':`
@@ -50,7 +51,7 @@ func getIdentifierToComplete(
 
 	matcher, err := regexp.Compile(`^.*?(` + regexpCursor + `)$`)
 	if err != nil {
-		return nil, fmt.Errorf("compile cursor regexp: %w", err)
+		return nil, karma.Format(err, "compile cursor regexp")
 	}
 
 	matches := matcher.FindStringSubmatch(textBeforeCursor)
@@ -77,7 +78,7 @@ func getCompletionCandidates(
 
 	matcher, err := regexp.Compile(query)
 	if err != nil {
-		return nil, fmt.Errorf("compile candidate regexp: %w", err)
+		return nil, karma.Format(err, "compile candidate regexp")
 	}
 
 	var candidates []*Candidate

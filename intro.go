@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/reconquest/karma-go"
 )
 
 const (
@@ -38,7 +40,7 @@ If you have any questions, don't hesitate to contact us:
 func printIntroductionMessage() error {
 	_, err := fmt.Fprint(os.Stdout, intro)
 	if err != nil {
-		return fmt.Errorf("write introduction: %w", err)
+		return karma.Format(err, "write introduction")
 	}
 
 	return nil

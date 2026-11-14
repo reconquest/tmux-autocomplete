@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+
+	"github.com/reconquest/karma-go"
 )
 
 func mkfifo() (string, error) {
@@ -15,7 +17,7 @@ func mkfifo() (string, error) {
 
 	_, err := rand.Read(token[:])
 	if err != nil {
-		return "", fmt.Errorf("generate fifo name: %w", err)
+		return "", karma.Format(err, "generate fifo name")
 	}
 
 	name := filepath.Join(
@@ -25,7 +27,7 @@ func mkfifo() (string, error) {
 
 	err = syscall.Mkfifo(name, permissions)
 	if err != nil {
-		return "", fmt.Errorf("create fifo %q: %w", name, err)
+		return "", karma.Describe("path", name).Format(err, "create fifo")
 	}
 
 	return name, nil
