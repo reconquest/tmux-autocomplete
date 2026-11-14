@@ -3,6 +3,8 @@ package main
 import (
 	"regexp"
 	"strings"
+
+	"github.com/mattn/go-runewidth"
 )
 
 var reEscapeSequence = regexp.MustCompile(`\x1b\[([^m]+)m`)
@@ -35,33 +37,76 @@ func CapturePane(tmux *Tmux, id string, args ...string) (*Pane, error) {
 }
 
 func (pane *Pane) GetBufferXY(lines []string, x, y int) (int, int) {
-	for row, line := range lines {
-		offset := (len([]rune(line)) - 1) / pane.Width
-
-		if row+offset >= y {
-			x = x + (y-row)*pane.Width
-			y = row
-			break
-		}
-
-		y -= offset
+	if pane.Width <= 0 || x < 0 || x > pane.Width || y < 0 {
+		return -1, -1
 	}
 
-	return x, y
+	for row, line := range lines {
+		positions, height := pane.getLinePositions(line)
+		if y < height {
+			cell := y*pane.Width + x
+			if cell > positions[len(positions)-1] {
+				return -1, -1
+			}
+
+			for index, symbol := range []rune(line) {
+				width := runewidth.RuneWidth(symbol)
+				if width > 0 && positions[index]+width > cell {
+					return index, row
+				}
+			}
+
+			return len(positions) - 1, row
+		}
+
+		y -= height
+	}
+
+	return -1, -1
 }
 
 func (pane *Pane) GetScreenXY(lines []string, x, y int) (int, int) {
-	offset := 0
-
-	for row, line := range lines {
-		if row == y {
-			return x % pane.Width, y + x/pane.Width + offset
-		} else {
-			offset += (len([]rune(line)) - 1) / pane.Width
-		}
+	if pane.Width <= 0 || x < 0 || y < 0 || y >= len(lines) {
+		return -1, -1
 	}
 
-	return x, y
+	offset := 0
+	for row, line := range lines {
+		positions, height := pane.getLinePositions(line)
+		if row == y {
+			if x >= len(positions) {
+				return -1, -1
+			}
+
+			return positions[x] % pane.Width, offset + positions[x]/pane.Width
+		}
+
+		offset += height
+	}
+
+	return -1, -1
+}
+
+func (pane *Pane) getLinePositions(line string) ([]int, int) {
+	positions := []int{}
+	cells := 0
+	for _, symbol := range line {
+		width := runewidth.RuneWidth(symbol)
+		if column := cells % pane.Width; column > 0 && column+width > pane.Width {
+			cells += pane.Width - column
+		}
+
+		positions = append(positions, cells)
+		cells += width
+	}
+	positions = append(positions, cells)
+
+	height := 1
+	if cells > 0 {
+		height += (cells - 1) / pane.Width
+	}
+
+	return positions, height
 }
 
 func (pane *Pane) GetPrintable() []string {

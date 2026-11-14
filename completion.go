@@ -31,7 +31,16 @@ func getIdentifierToComplete(
 	x int,
 	y int,
 ) (*Identifier, error) {
-	textBeforeCursor := string([]rune(lines[y])[:x])
+	if y < 0 || y >= len(lines) || x < 0 {
+		return nil, nil
+	}
+
+	symbols := []rune(lines[y])
+	if x > len(symbols) {
+		return nil, nil
+	}
+
+	textBeforeCursor := string(symbols[:x])
 
 	matcher, err := regexp.Compile(
 		`^.*?(` + regexpCursor + `)$`,
