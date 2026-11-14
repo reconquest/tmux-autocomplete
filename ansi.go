@@ -1,9 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
-func moveCursor(x, y int) {
-	fmt.Printf("\x1b[%d;%dH", y+1, x+1)
+func cursorSequence(x, y int) string {
+	return fmt.Sprintf("\x1b[%d;%dH", y+1, x+1)
 }

@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 const (
+	//nolint:dupword // Repeated Control+Space is the required two-key binding.
 	intro = `Hello! Thank you for trying out tmux-autocomplete.
 
 tmux-autocomplete should not be running from terminal, it should be running
@@ -33,6 +35,11 @@ If you have any questions, don't hesitate to contact us:
 `
 )
 
-func printIntroductionMessage() {
-	fmt.Print(intro)
+func printIntroductionMessage() error {
+	_, err := fmt.Fprint(os.Stdout, intro)
+	if err != nil {
+		return fmt.Errorf("write introduction: %w", err)
+	}
+
+	return nil
 }
