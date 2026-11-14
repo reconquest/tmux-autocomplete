@@ -265,6 +265,10 @@ func selectNextCandidate(
 				continue
 			}
 
+			if distanceX > 0 {
+				continue
+			}
+
 			if dirX == 1 {
 				// looking for size greater than selected but the difference
 				// should be as small as possible
