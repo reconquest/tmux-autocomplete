@@ -43,7 +43,7 @@ func writeReport(reason interface{}) {
 		),
 	)
 
-	err := ioutil.WriteFile(filename, data, 0644)
+	err := ioutil.WriteFile(filename, data, 0600)
 	if err != nil {
 		log.Printf("unable to write bug report into file: %q", filename)
 		log.Println(string(data))
