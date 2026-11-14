@@ -47,7 +47,7 @@ func getIdentifierToComplete(
 	}
 
 	return &Identifier{
-		X: x - len(matches[1]),
+		X: x - len([]rune(matches[1])),
 		Y: y,
 
 		Value: matches[1],
