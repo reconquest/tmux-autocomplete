@@ -1,5 +1,3 @@
 package main
 
-var (
-	defaultSystemThemePath = `/usr/share/tmux-autocomplete/themes/`
-)
+const defaultSystemThemePath = `/usr/share/tmux-autocomplete/themes/`

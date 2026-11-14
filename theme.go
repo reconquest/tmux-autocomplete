@@ -8,58 +8,66 @@ import (
 	"strings"
 
 	"github.com/kovetskiy/ko"
-	"github.com/reconquest/karma-go"
+
 	yaml "gopkg.in/coryb/yaml.v2"
 )
 
+// Theme defines the required identifier and candidate styles and optional fog.
 type Theme struct {
-	Identifier string `required:"true"`
-
-	Candidate struct {
-		Normal   string `required:"true"`
-		Selected string `required:"true"`
-		// Nested   string `required:"true"`
-	} `required:"true"`
-
-	Fog struct {
-		Text       string `required:"true"`
-		Background string `required:"true"`
-	}
+	Identifier string         `required:"true"`
+	Candidate  themeCandidate `required:"true"`
+	Fog        themeFog
 }
 
-var (
+type themeCandidate = struct {
+	Normal   string `required:"true"`
+	Selected string `required:"true"`
+}
+
+type themeFog = struct {
+	Text       string `required:"true"`
+	Background string `required:"true"`
+}
+
+const (
 	defaultUserThemePath = `~/.config/tmux-autocomplete/themes/`
 	defaultThemePath     = defaultSystemThemePath + `:` + defaultUserThemePath
 )
 
-func LoadTheme(dirs string, name string) (*Theme, error) {
+// LoadTheme loads the first matching theme from colon-separated directories.
+// Missing files are skipped; invalid themes and empty directories are errors.
+func LoadTheme(dirs, name string) (*Theme, error) {
 	var theme Theme
+
 	for _, dir := range strings.Split(dirs, ":") {
-		if dir == "" {
-			return nil, fmt.Errorf("empty directory with themes specified")
-		}
-
-		if strings.HasPrefix(dir, "~/") {
-			// 1 because need to trim only ~ symbol, slash is required
-			dir = os.Getenv("HOME") + dir[1:]
-		}
-
-		path := filepath.Join(dir, name+".theme")
-
-		err := ko.Load(path, &theme, yaml.Unmarshal)
+		path, err := themeFilePath(dir, name)
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-
-			return nil, karma.Format(
-				err,
-				"unable to read theme file: %s", path,
-			)
+			return nil, err
 		}
 
-		return &theme, nil
+		err = ko.Load(path, &theme, yaml.Unmarshal)
+		if err == nil {
+			return &theme, nil
+		}
+
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		return nil, fmt.Errorf("unable to read theme file: %s: %w", path, err)
 	}
 
 	return nil, errors.New("no such theme found")
+}
+
+func themeFilePath(dir, name string) (string, error) {
+	if dir == "" {
+		return "", errors.New("empty directory with themes specified")
+	}
+
+	if strings.HasPrefix(dir, "~/") {
+		dir = os.Getenv("HOME") + dir[1:]
+	}
+
+	return filepath.Join(dir, name+".theme"), nil
 }
