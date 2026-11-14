@@ -87,3 +87,7 @@ clean:
 upload:
 	@echo ":: Uploading new archives to remote host"
 	@./upload
+
+.PHONY: lint
+lint:
+	golangci-lint run --uniq-by-line=false ./...
