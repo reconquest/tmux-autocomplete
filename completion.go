@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
-var trimRight = `)]"':`
+const trimRight = `)]"':`
 
+// Candidate is a completion occurrence, optionally nested under a parent value.
 type Candidate struct {
 	*Identifier
 
@@ -14,6 +17,7 @@ type Candidate struct {
 	Parent   string
 }
 
+// Identifier is text located at zero-based rune and line coordinates.
 type Identifier struct {
 	X int
 	Y int
@@ -21,44 +25,42 @@ type Identifier struct {
 	Value string
 }
 
+// Length returns the identifier's rune count.
 func (identifier *Identifier) Length() int {
-	return len([]rune(identifier.Value))
+	return utf8.RuneCountInString(identifier.Value)
 }
 
+//nolint:nilnil // Nil identifier denotes absence, not a regexp error.
 func getIdentifierToComplete(
 	regexpCursor string,
 	lines []string,
-	x int,
-	y int,
+	column int,
+	row int,
 ) (*Identifier, error) {
-	if y < 0 || y >= len(lines) || x < 0 {
+	if row < 0 || row >= len(lines) || column < 0 {
 		return nil, nil
 	}
 
-	symbols := []rune(lines[y])
-	if x > len(symbols) {
+	symbols := []rune(lines[row])
+	if column > len(symbols) {
 		return nil, nil
 	}
 
-	textBeforeCursor := string(symbols[:x])
+	textBeforeCursor := string(symbols[:column])
 
-	matcher, err := regexp.Compile(
-		`^.*?(` + regexpCursor + `)$`,
-	)
+	matcher, err := regexp.Compile(`^.*?(` + regexpCursor + `)$`)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compile cursor regexp: %w", err)
 	}
 
 	matches := matcher.FindStringSubmatch(textBeforeCursor)
-
-	if len(matches) < 2 {
+	if len(matches) <= 1 {
 		return nil, nil
 	}
 
 	return &Identifier{
-		X: x - len([]rune(matches[1])),
-		Y: y,
-
+		X:     column - utf8.RuneCountInString(matches[1]),
+		Y:     row,
 		Value: matches[1],
 	}, nil
 }
@@ -75,74 +77,68 @@ func getCompletionCandidates(
 
 	matcher, err := regexp.Compile(query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compile candidate regexp: %w", err)
 	}
 
 	var candidates []*Candidate
 
-	type unit struct {
-		value string
-		start int
+	for row, line := range lines {
+		candidates = append(candidates,
+			getLineCandidates(matcher, line, row, identifier)...)
 	}
 
-	for lineNumber, line := range lines {
-		matches := matcher.FindAllStringSubmatchIndex(line, -1)
+	return candidates, nil
+}
 
-		for _, match := range matches {
-			var (
-				start, end = match[0], match[1]
-				text       = line[start:end]
-			)
+func getLineCandidates(
+	matcher *regexp.Regexp,
+	line string,
+	row int,
+	identifier *Identifier,
+) []*Candidate {
+	var candidates []*Candidate
 
-			units := []unit{
-				{text, start},
-			}
+	for _, match := range matcher.FindAllStringSubmatchIndex(line, -1) {
+		column := utf8.RuneCountInString(line[:match[0]])
+		variants := getCandidateVariants(line[match[0]:match[1]], column, row)
 
-			trimmed := strings.TrimRight(text, trimRight)
-
-			if len(trimmed) > 0 && trimmed != text {
-				units = append(
-					units,
-					unit{trimmed, start},
-				)
-			}
-
-			for number, unit := range units {
-				if identifier != nil && !strings.HasPrefix(unit.value, identifier.Value) {
-					continue
-				}
-
-				if identifier != nil && unit.value == identifier.Value {
-					continue
-				}
-
-				var (
-					x = len([]rune(line[:unit.start]))
-					y = lineNumber
-				)
-
-				if identifier != nil && x == identifier.X && y == identifier.Y {
-					continue
-				}
-
-				parent := ""
-				if number > 0 {
-					parent = text
-				}
-				candidates = append(candidates, &Candidate{
-					Identifier: &Identifier{
-						X: x,
-						Y: y,
-
-						Value: unit.value,
-					},
-					Parent: parent,
-				})
+		for _, candidate := range variants {
+			if isCompletionCandidate(candidate, identifier) {
+				candidates = append(candidates, candidate)
 			}
 		}
 	}
 
-	return candidates, nil
+	return candidates
+}
+
+func getCandidateVariants(text string, column, row int) []*Candidate {
+	candidates := []*Candidate{
+		{Identifier: &Identifier{X: column, Y: row, Value: text}},
+	}
+
+	trimmed := strings.TrimRight(text, trimRight)
+	if trimmed != "" && trimmed != text {
+		candidates = append(candidates, &Candidate{
+			Identifier: &Identifier{X: column, Y: row, Value: trimmed},
+			Parent:     text,
+		})
+	}
+
+	return candidates
+}
+
+func isCompletionCandidate(candidate *Candidate, identifier *Identifier) bool {
+	if identifier == nil {
+		return true
+	}
+
+	if candidate.X == identifier.X && candidate.Y == identifier.Y {
+		return false
+	}
+
+	return candidate.Value != identifier.Value &&
+		strings.HasPrefix(candidate.Value, identifier.Value)
 }
 
 func getSelectedCandidate(candidates []*Candidate) *Candidate {
@@ -155,50 +151,18 @@ func getSelectedCandidate(candidates []*Candidate) *Candidate {
 	return nil
 }
 
-func selectDefaultCandidate(
-	candidates []*Candidate,
-	x int,
-	y int,
-) {
-	if len(candidates) == 0 {
-		return
-	}
-
+func selectDefaultCandidate(candidates []*Candidate, column, row int) {
 	var closest *Candidate
 
 	for _, candidate := range candidates {
-		// never select nested candidates as default
-		// there should be a parent
-		if candidate.Parent != "" {
-			continue
-		}
-
-		if closest == nil {
+		if candidate.Parent == "" &&
+			isCloserDefaultCandidate(candidate, closest, column, row) {
 			closest = candidate
-			continue
 		}
+	}
 
-		if candidate.Y > y {
-			continue
-		}
-
-		if candidate.Y == y {
-			if candidate.X > x {
-				continue
-			}
-		}
-
-		if y-candidate.Y > y-closest.Y {
-			continue
-		}
-
-		if candidate.Y == closest.Y {
-			if candidate.X < closest.X {
-				continue
-			}
-		}
-
-		closest = candidate
+	if closest == nil {
+		return
 	}
 
 	if selected := getSelectedCandidate(candidates); selected != nil {
@@ -208,11 +172,31 @@ func selectDefaultCandidate(
 	closest.Selected = true
 }
 
+func isCloserDefaultCandidate(
+	candidate, closest *Candidate,
+	column, row int,
+) bool {
+	if closest == nil {
+		return true
+	}
+
+	if candidate.Y > row || (candidate.Y == row && candidate.X > column) {
+		return false
+	}
+
+	if candidate.Y < closest.Y {
+		return false
+	}
+
+	return candidate.Y != closest.Y || candidate.X >= closest.X
+}
+
 func debugCandidate(candidate *Candidate) {
 	selected := ""
 	if candidate.Selected {
 		selected = " (selected)"
 	}
+
 	debug.Printf(
 		"y: %-3v x: %-3v length: %-3v value: %s%s",
 		candidate.Y,
@@ -223,14 +207,7 @@ func debugCandidate(candidate *Candidate) {
 	)
 }
 
-// the following code has many if-conditions that can be omitted, but please do
-// not refactor it, it has been made consciously in order to reduce cognitive
-// load
-func selectNextCandidate(
-	candidates []*Candidate,
-	dirX int,
-	dirY int,
-) {
+func selectNextCandidate(candidates []*Candidate, dirX, dirY int) {
 	debug.Printf("selecting next candidate")
 
 	selected := getSelectedCandidate(candidates)
@@ -238,115 +215,92 @@ func selectNextCandidate(
 		return
 	}
 
-	next := []*Candidate{}
+	var closest *Candidate
 
 	for _, candidate := range candidates {
-		if isNextCandidate(selected, dirX, dirY, candidate) {
-			next = append(next, candidate)
+		if !isNextCandidate(selected, dirX, dirY, candidate) {
+			continue
+		}
+
+		if isCloserNextCandidate(selected, closest, candidate, dirX, dirY) {
+			closest = candidate
 		}
 	}
 
-	if len(next) == 0 {
+	if closest == nil {
 		return
-	}
-
-	closest := next[0]
-
-	for _, candidate := range next {
-		distanceX := abs(selected.X-candidate.X) - abs(selected.X-closest.X)
-
-		switch {
-		case dirY != 0:
-			distanceY := abs(selected.Y-candidate.Y) - abs(selected.Y-closest.Y)
-			if distanceY < 0 {
-				closest = candidate
-				continue
-			}
-
-			if distanceY == 0 && distanceX < 0 {
-				closest = candidate
-				continue
-			}
-
-		case dirX != 0:
-			if distanceX < 0 {
-				closest = candidate
-				continue
-			}
-
-			if distanceX > 0 {
-				continue
-			}
-
-			if dirX == 1 {
-				// looking for size greater than selected but the difference
-				// should be as small as possible
-				if candidate.Length() > selected.Length() && candidate.Length() < closest.Length() {
-					closest = candidate
-				}
-			} else {
-				// looking for size less than selected but the difference
-				// should be as small as possible (near to selected as possible)
-				if candidate.Length() < selected.Length() && candidate.Length() > closest.Length() {
-					closest = candidate
-				}
-			}
-		}
 	}
 
 	closest.Selected = true
 	selected.Selected = false
 }
 
-func isNextCandidate(selected *Candidate, dirX, dirY int, candidate *Candidate) bool {
-	debugCandidate(candidate)
-
-	signX := sign(dirX)
-	signY := sign(dirY)
-
-	offsetX := sign(candidate.X - selected.X)
-	offsetY := sign(candidate.Y - selected.Y)
-
-	if dirX != 0 {
-		// case: move horizontally
-		if offsetY != 0 {
-			// not interested in vertical moves in horizontal mode
-			return false
-		}
-
-		debug.Printf("signX: %d offsetX: %d", signX, offsetX)
-		if signX == offsetX {
-			return true
-		}
-
-		// wrong direction
-
-		if offsetX == 0 {
-			// that case is possible when we have two items on the same
-			// X coordinate but with different length of identifier
-			if signX > 0 {
-				// move right
-				if candidate.Length() > selected.Length() {
-					// not interested in less size, candidate length should be
-					// greater than slected
-					return true
-				}
-			} else {
-				// move left
-				if candidate.Length() < selected.Length() {
-					return true
-				}
-			}
-		}
-
-		return false
-	}
-	// case: move vertically
-	if signY == offsetY {
+func isCloserNextCandidate(
+	selected, closest, candidate *Candidate,
+	dirX, dirY int,
+) bool {
+	if closest == nil {
 		return true
 	}
 
-	return false
+	distanceX := abs(selected.X-candidate.X) - abs(selected.X-closest.X)
+
+	if dirY != 0 {
+		distanceY := abs(selected.Y-candidate.Y) - abs(selected.Y-closest.Y)
+
+		return distanceY < 0 || (distanceY == 0 && distanceX < 0)
+	}
+
+	if dirX == 0 {
+		return false
+	}
+
+	if distanceX != 0 {
+		return distanceX < 0
+	}
+
+	return isCloserNestedCandidate(selected, closest, candidate, dirX)
+}
+
+func isCloserNestedCandidate(
+	selected, closest, candidate *Candidate,
+	direction int,
+) bool {
+	if direction == 1 {
+		return candidate.Length() > selected.Length() &&
+			candidate.Length() < closest.Length()
+	}
+
+	return candidate.Length() < selected.Length() &&
+		candidate.Length() > closest.Length()
+}
+
+func isNextCandidate(
+	selected *Candidate,
+	dirX, dirY int,
+	candidate *Candidate,
+) bool {
+	debugCandidate(candidate)
+
+	offsetY := sign(candidate.Y - selected.Y)
+	if dirX == 0 {
+		return sign(dirY) == offsetY
+	}
+
+	if offsetY != 0 {
+		return false
+	}
+
+	signX := sign(dirX)
+	offsetX := sign(candidate.X - selected.X)
+	debug.Printf("signX: %d offsetX: %d", signX, offsetX)
+
+	if signX == offsetX {
+		return true
+	}
+
+	return offsetX == 0 &&
+		sign(candidate.Length()-selected.Length()) == signX
 }
 
 func abs(x int) int {
@@ -361,32 +315,35 @@ func sign(value int) int {
 	switch {
 	case value > 0:
 		return 1
+
 	case value < 0:
 		return -1
+
 	default:
 		return 0
 	}
 }
 
 func getUniqueCandidates(candidates []*Candidate) []*Candidate {
+	seen := make(map[[2]string]bool, len(candidates))
 	uniques := []*Candidate{}
 
-mainLoop:
-	for i := len(candidates) - 1; i >= 0; i-- {
-		candidate := candidates[i]
+	for index := len(candidates) - 1; index >= 0; index-- {
+		candidate := candidates[index]
+		key := [2]string{candidate.Value, candidate.Parent}
 
-		for _, unique := range uniques {
-			if unique.Value == candidate.Value && unique.Parent == candidate.Parent {
-				continue mainLoop
-			}
+		if seen[key] {
+			continue
 		}
+
+		seen[key] = true
 
 		uniques = append(uniques, candidate)
 	}
 
-	reversed := []*Candidate{}
-	for i := len(uniques) - 1; i >= 0; i-- {
-		reversed = append(reversed, uniques[i])
+	reversed := make([]*Candidate, 0, len(uniques))
+	for index := len(uniques) - 1; index >= 0; index-- {
+		reversed = append(reversed, uniques[index])
 	}
 
 	return reversed

@@ -1,18 +1,17 @@
 package main
 
 import (
-	"io/ioutil"
-	"log"
+	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testcase struct {
-	path     string
 	lines    []string
 	cursorX  int
 	cursorY  int
@@ -20,102 +19,82 @@ type testcase struct {
 }
 
 func TestCompletion(t *testing.T) {
-	test := assert.New(t)
-
-	scenarios, err := filepath.Glob("unit_tests/*")
-	if err != nil {
-		panic(err)
-	}
+	scenarios, readErr := os.ReadDir("unit_tests")
+	require.NoError(t, readErr)
+	require.NotEmptyf(t, scenarios, "no tests found")
 
 	only := os.Getenv("ONLY")
 	if only != "" {
-		log.Printf("filter for testcases: *%s*", only)
+		t.Logf("filter for testcases: *%s*", only)
 	}
 
-	testcases := []testcase{}
+	matched := 0
+
 	for _, scenario := range scenarios {
-		// ignore dirs
-		if isFileExists(scenario) {
-			if strings.Contains(scenario, only) {
-				testcases = append(testcases, getTestcase(scenario))
+		if scenario.IsDir() || !strings.Contains(scenario.Name(), only) {
+			continue
+		}
+
+		matched++
+
+		t.Run(scenario.Name(), func(t *testing.T) {
+			fixture := getTestcase(t, scenario.Name())
+			identifier, err := getIdentifierToComplete(
+				defaultRegexpCursor,
+				fixture.lines,
+				fixture.cursorX,
+				fixture.cursorY,
+			)
+			require.NoErrorf(t, err, "unable to get completion identifier")
+			require.NotNilf(t, identifier, "invalid prompt (identifier = nil)")
+
+			candidates, err := getCompletionCandidates(
+				defaultRegexpCandidate, fixture.lines, identifier,
+			)
+			require.NoErrorf(t, err, "unable to get completion candidates")
+
+			candidates = getUniqueCandidates(candidates)
+
+			values := make([]string, 0, len(candidates))
+
+			for _, candidate := range candidates {
+				values = append(values, candidate.Value)
+				t.Logf("candidate=%s y=%d x=%d",
+					candidate.Value, candidate.Y, candidate.X)
 			}
-		}
+
+			assert.Equal(t, fixture.expected, values)
+		})
 	}
 
-	if len(scenarios) == 0 {
-		panic("no tests found")
-	}
-
-	for _, testcase := range testcases {
-		id, err := getIdentifierToComplete(
-			defaultRegexpCursor,
-			testcase.lines,
-			testcase.cursorX,
-			testcase.cursorY,
-		)
-		if err != nil {
-			test.Errorf(err, "unable to get completion identifier: %s", testcase.path)
-			continue
-		}
-
-		if !test.NotNilf(id, "invalid prompt (identifier = nil) in %s", testcase.path) {
-			continue
-		}
-
-		candidates, err := getCompletionCandidates(defaultRegexpCandidate, testcase.lines, id)
-		if err != nil {
-			test.Errorf(err, "unable to get completion candidates: %s", testcase.path)
-			continue
-		}
-
-		candidates = getUniqueCandidates(candidates)
-
-		values := []string{}
-		for _, candidate := range candidates {
-			values = append(values, candidate.Value)
-
-			log.Printf("candidate=%s y=%d x=%d", candidate.Value, candidate.Y, candidate.X)
-		}
-
-		test.EqualValues(testcase.expected, values, "%s", testcase.path)
-	}
+	require.Positivef(t, matched, "no fixtures match ONLY=%q", only)
 }
 
-func getTestcase(filename string) testcase {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+func getTestcase(t *testing.T, filename string) testcase {
+	t.Helper()
 
-	src := strings.Split(strings.TrimSpace(string(data)), "\n")
+	fixtures := os.DirFS("unit_tests")
+	data, err := fs.ReadFile(fixtures, filename)
+	require.NoErrorf(t, err, "read scenario %s", filename)
 
-	pane := src[0]
-	prompt := src[1]
-	candidates := src[2:]
+	const headerLines = 2
 
-	// no cache because zfs already has arc
-	paneData, err := ioutil.ReadFile("unit_tests/" + pane)
-	if err != nil {
-		panic(err)
-	}
+	source := strings.Split(strings.TrimSpace(string(data)), "\n")
+	require.GreaterOrEqualf(t, len(source), headerLines,
+		"invalid scenario %s", filename)
 
+	paneData, err := fs.ReadFile(fixtures, source[0])
+	require.NoErrorf(t, err, "read pane %s", source[0])
+
+	prompt := "$ " + source[1]
 	lines := strings.Split(string(paneData), "\n")
 
-	prefix := "$ "
-	lines = append(lines, prefix+prompt)
-	cursorY := len(lines) - 1
-	cursorX := len(prefix + prompt)
+	lines = append(lines, prompt)
 
 	return testcase{
-		path:     filename,
 		lines:    lines,
-		cursorX:  cursorX,
-		cursorY:  cursorY,
-		expected: candidates,
+		cursorX:  utf8.RuneCountInString(prompt),
+		cursorY:  len(lines) - 1,
+		expected: source[headerLines:],
 	}
-}
-
-func isFileExists(path string) bool {
-	stat, err := os.Stat(path)
-	return !os.IsNotExist(err) && !stat.IsDir()
 }
