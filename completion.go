@@ -8,7 +8,7 @@ import (
 	"github.com/reconquest/karma-go"
 )
 
-const trimRight = `)]"':`
+const trimRight = `)]"':-`
 
 // Candidate is a completion occurrence, optionally nested under a parent value.
 type Candidate struct {
