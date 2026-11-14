@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mattn/go-isatty"
@@ -303,17 +304,17 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 	for flag, value := range args {
 		switch flag {
 		case "--theme-path":
-			cmd = append(cmd, flag, fmt.Sprintf("%q", themePath))
+			cmd = append(cmd, flag, themePath)
 		case "--regexp":
-			cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+			cmd = append(cmd, flag, fmt.Sprint(value))
 		case "--debug":
 			if value != nil {
-				cmd = append(cmd, flag, fmt.Sprintf("%q", value))
+				cmd = append(cmd, flag, fmt.Sprint(value))
 			}
 		default:
 			switch typed := value.(type) {
 			case string:
-				cmd = append(cmd, flag, fmt.Sprintf("%q", typed))
+				cmd = append(cmd, flag, typed)
 			case bool:
 				if typed {
 					cmd = append(cmd, flag)
@@ -331,7 +332,11 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 		}
 	}
 
-	cmd = append(cmd, pane, cursorX, cursorY, "-W", "2>"+logsPipe)
+	cmd = append(cmd, pane, cursorX, cursorY, "-W")
+	for i, arg := range cmd {
+		cmd[i] = shellQuote(arg)
+	}
+	cmd = append(cmd, "2>"+shellQuote(logsPipe))
 
 	err = tmux.NewWindow(cmd...)
 	if err != nil {
@@ -368,6 +373,10 @@ func start(args map[string]interface{}, themePath string, tmux *Tmux) error {
 	}
 
 	return nil
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.Replace(value, "'", "'\"'\"'", -1) + "'"
 }
 
 func renderPane(pane *Pane, theme *Theme) {
