@@ -1,7 +1,12 @@
 #!/bin/sh
 
+case "$(uname -s)" in
+Darwin) opener=open ;;
+*) opener=xdg-open ;;
+esac
+
 exec tmux-autocomplete \
     --regexp-candidate '\w+://[^ ]+' \
     --no-prefix \
-    --exec xdg-open \
+    --exec "$opener" \
     "${@}"
